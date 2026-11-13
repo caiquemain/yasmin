@@ -3,12 +3,21 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 
-export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: any, checklist: any[] }) {
+export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas }: { obra: any, checklist: any[], initialParcelas: any[] }) {
   const supabase = createClient();
+  
+  // Checklist state
   const [checklist, setChecklist] = useState(initialChecklist);
+  
+  // Parcelas state
+  const [parcelas, setParcelas] = useState(initialParcelas);
+  const [isParcelaModalOpen, setIsParcelaModalOpen] = useState(false);
+  const [formParcela, setFormParcela] = useState({ descricao: '', valor: '', data_prevista: '' });
+  
   const [loading, setLoading] = useState(false);
+  const [loadingParcela, setLoadingParcela] = useState(false);
 
-  // Premissas (estado local)
+  // Premissas state
   const [premissas, setPremissas] = useState({
     fck: obra.premissa_fck || '',
     caa: obra.premissa_caa || '',
@@ -18,13 +27,22 @@ export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: 
   });
 
   const toggleChecklist = async (id: string, concluido: boolean) => {
-    // Atualiza otimista na tela
     setChecklist(prev => prev.map(c => c.id === id ? { ...c, concluido: !concluido } : c));
-    
-    // Salva no banco
     await supabase.from('obra_checklist').update({ 
       concluido: !concluido, 
       concluido_em: !concluido ? new Date().toISOString() : null 
+    }).eq('id', id);
+  };
+
+  const toggleParcela = async (id: string, statusAtual: string) => {
+    const isPago = statusAtual === 'pago';
+    const novoStatus = isPago ? 'pendente' : 'pago';
+    
+    setParcelas(prev => prev.map(p => p.id === id ? { ...p, status: novoStatus } : p));
+    
+    await supabase.from('obra_parcelas').update({ 
+      status: novoStatus,
+      data_pago: !isPago ? new Date().toISOString() : null
     }).eq('id', id);
   };
 
@@ -41,11 +59,47 @@ export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: 
     alert('Premissas salvas!');
   };
 
+  const handleCreateParcela = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoadingParcela(true);
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const payload = {
+      user_id: user.id,
+      obra_id: obra.id,
+      descricao: formParcela.descricao,
+      valor: Number(formParcela.valor),
+      data_prevista: formParcela.data_prevista || null,
+      ordem: parcelas.length,
+      status: 'pendente'
+    };
+
+    const { data, error } = await supabase.from('obra_parcelas').insert([payload]).select().single();
+
+    if (error) {
+      alert(error.message);
+    } else {
+      setParcelas([...parcelas, data]);
+      setIsParcelaModalOpen(false);
+      setFormParcela({ descricao: '', valor: '', data_prevista: '' });
+    }
+    setLoadingParcela(false);
+  };
+
   const progresso = checklist.length ? Math.round((checklist.filter(c => c.concluido).length / checklist.length) * 100) : 0;
+  
+  // Cálculos financeiros
+  const totalPago = parcelas.filter(p => p.status === 'pago').reduce((acc, p) => acc + Number(p.valor), 0);
+  const totalPendente = parcelas.filter(p => p.status === 'pendente').reduce((acc, p) => acc + Number(p.valor), 0);
+  const totalGeral = totalPago + totalPendente;
+
+  const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
-      {/* Header da Obra */}
+      {/* Header */}
       <div className="mb-10">
         <Link href="/obras" className="label-mono text-petrol hover:underline mb-4 inline-block">← Voltar para Obras</Link>
         <h1 className="font-serif text-4xl text-petrol-deep mb-2">{obra.nome}</h1>
@@ -57,7 +111,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
-        {/* Coluna Esquerda: Checklist e Financeiro */}
+        {/* Coluna Esquerda */}
         <div className="space-y-10">
           {/* Checklist */}
           <section>
@@ -80,24 +134,59 @@ export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: 
             </ul>
           </section>
 
-          {/* Financeiro Placeholder */}
+          {/* Financeiro */}
           <section>
-            <h2 className="font-serif text-2xl text-petrol-deep border-b border-line pb-2 mb-4">Financeiro</h2>
-            <div className="p-4 bg-surface border border-line-strong flex justify-between items-center">
-              <div>
-                <span className="label-mono block">Honorários Totais</span>
-                <span className="font-serif text-xl">R$ {obra.honorarios_total?.toLocaleString('pt-BR') || '0,00'}</span>
-              </div>
-              <button className="px-4 py-2 border border-line-strong label-mono hover:bg-bg">+ Adicionar Parcela</button>
+            <div className="flex items-end justify-between border-b border-line pb-2 mb-4">
+              <h2 className="font-serif text-2xl text-petrol-deep">Financeiro</h2>
+              <button onClick={() => setIsParcelaModalOpen(true)} className="label-mono text-petrol hover:underline">+ Adicionar Parcela</button>
             </div>
+            
+            {/* Resumo Financeiro */}
+            <div className="grid grid-cols-3 gap-px bg-line border border-line-strong mb-6">
+              <div className="bg-surface p-4">
+                <span className="label-mono block mb-1">Total</span>
+                <span className="font-serif text-lg text-petrol-deep">{formatBRL(totalGeral)}</span>
+              </div>
+              <div className="bg-surface p-4">
+                <span className="label-mono block mb-1">Recebido</span>
+                <span className="font-serif text-lg text-petrol">{formatBRL(totalPago)}</span>
+              </div>
+              <div className="bg-surface p-4">
+                <span className="label-mono block mb-1">A Receber</span>
+                <span className="font-serif text-lg text-terra">{formatBRL(totalPendente)}</span>
+              </div>
+            </div>
+
+            {/* Lista de Parcelas */}
+            {parcelas.length === 0 ? (
+              <p className="text-sm text-ink-soft italic">Nenhuma parcela cadastrada.</p>
+            ) : (
+              <ul className="space-y-2">
+                {parcelas.map((p) => (
+                  <li key={p.id} className="flex items-center gap-4 p-3 border border-line-strong bg-surface group">
+                    <button onClick={() => toggleParcela(p.id, p.status)} className={`w-5 h-5 border flex flex-shrink-0 items-center justify-center transition-colors ${p.status === 'pago' ? 'bg-petrol border-petrol' : 'border-line-strong group-hover:border-petrol'}`}>
+                      {p.status === 'pago' && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-bg" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                    </button>
+                    <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                      <div>
+                        <span className={`text-[14.5px] block ${p.status === 'pago' ? 'opacity-50 line-through' : ''}`}>{p.descricao}</span>
+                        {p.data_prevista && <span className="label-mono text-ink-faint">Previsto: {new Date(p.data_prevista + 'T12:00:00').toLocaleDateString('pt-BR')}</span>}
+                      </div>
+                      <span className={`font-mono text-sm ${p.status === 'pago' ? 'text-petrol' : 'text-ink-soft'}`}>
+                        {formatBRL(Number(p.valor))}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
         </div>
 
-        {/* Coluna Direita: Premissas e ART */}
+        {/* Coluna Direita */}
         <div className="space-y-8">
           <section className="bg-surface p-6 border border-line-strong sticky top-20">
             <h2 className="font-serif text-xl text-petrol-deep mb-6">Premissas de Cálculo</h2>
-            
             <div className="space-y-4">
               <div className="space-y-1">
                 <label className="label-mono">fck (MPa)</label>
@@ -127,25 +216,40 @@ export function ObraDetailClient({ obra, checklist: initialChecklist }: { obra: 
                 <label className="label-mono">Outras Notas</label>
                 <textarea value={premissas.outras} onChange={e => setPremissas({...premissas, outras: e.target.value})} className="w-full bg-transparent border border-line-strong p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none" placeholder="Ex: Presença de rocha no solo..." />
               </div>
-              
               <button onClick={savePremissas} disabled={loading} className="w-full py-2 mt-2 bg-petrol text-bg text-sm font-medium hover:bg-petrol-deep transition">
                 {loading ? 'Salvando...' : 'Salvar Premissas'}
               </button>
             </div>
           </section>
-
-          <section className="bg-surface p-6 border border-line-strong">
-            <h2 className="font-serif text-xl text-petrol-deep mb-4">ART</h2>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center text-sm">
-                <span className="label-mono">Status</span>
-                <span className="font-mono text-2xs uppercase bg-amber/20 text-amber px-2 py-0.5">{obra.art_status}</span>
-              </div>
-              <button className="w-full py-2 border border-line-strong label-mono hover:bg-bg">Gerenciar ART</button>
-            </div>
-          </section>
         </div>
       </div>
+
+      {/* Modal de Nova Parcela */}
+      {isParcelaModalOpen && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setIsParcelaModalOpen(false)} />
+          <div className="fixed z-50 bg-bg inset-x-0 bottom-0 h-auto border-t border-line-strong p-6 md:inset-y-0 md:right-0 md:left-auto md:w-[400px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right">
+            <h2 className="font-serif text-xl text-petrol-deep mb-6">Nova Parcela</h2>
+            <form onSubmit={handleCreateParcela} className="space-y-5">
+              <div className="space-y-1">
+                <label className="label-mono">Descrição</label>
+                <input required value={formParcela.descricao} onChange={e => setFormParcela({...formParcela, descricao: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-lg focus:outline-none focus:border-petrol" placeholder="Ex: Entrega de formas" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Valor (R$)</label>
+                <input required type="number" step="0.01" value={formParcela.valor} onChange={e => setFormParcela({...formParcela, valor: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-lg focus:outline-none focus:border-petrol" placeholder="0,00" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Data Prevista (Opcional)</label>
+                <input type="date" value={formParcela.data_prevista} onChange={e => setFormParcela({...formParcela, data_prevista: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol" />
+              </div>
+              <button type="submit" disabled={loadingParcela} className="w-full py-3 mt-4 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
+                {loadingParcela ? 'Salvando...' : 'Adicionar Parcela'}
+              </button>
+            </form>
+          </div>
+        </>
+      )}
     </div>
   );
 }

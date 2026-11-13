@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { addDays, addWeeks, addMonths, format } from 'date-fns';
 
 export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const supabase = createClient();
@@ -20,6 +21,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     prioridade: 'media',
     data: new Date().toLocaleDateString('sv-SE'),
     hora_inicio: '',
+    recorrencia: 'none', // none, daily, weekly, monthly
   });
 
   useEffect(() => {
@@ -33,17 +35,11 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     e.preventDefault();
     setLoading(true);
 
-    // Pega o usuário logado para preencher o user_id
     const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      alert('Sessão expirada. Faça login novamente.');
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
 
-    const payload = {
-      user_id: user.id, // <-- AQUI ESTÁ A CORREÇÃO
+    const basePayload = {
+      user_id: user.id,
       tipo: form.tipo,
       titulo: form.titulo,
       descricao: form.descricao || null,
@@ -52,11 +48,29 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       revisao: form.revisao || null,
       status: form.status,
       prioridade: form.prioridade,
-      data: form.data,
       hora_inicio: form.hora_inicio || null,
+      recorrencia: form.recorrencia,
     };
 
-    const { error } = await supabase.from('demandas').insert([payload]);
+    let payloads = [];
+    const dataBase = new Date(form.data + 'T12:00:00'); // Meio-dia para evitar fuso
+
+    if (form.recorrencia === 'none') {
+      payloads.push({ ...basePayload, data: form.data });
+    } else {
+      // Materializa as próximas ocorrências (ex: 4 semanas)
+      const numOcorrencias = 4;
+      for (let i = 0; i < numOcorrencias; i++) {
+        let novaData = dataBase;
+        if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
+        if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
+        if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
+
+        payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd') });
+      }
+    }
+
+    const { error } = await supabase.from('demandas').insert(payloads);
 
     if (error) {
       alert('Erro ao salvar: ' + error.message);
@@ -134,24 +148,36 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             </div>
           </div>
 
-          <div className="space-y-1">
-            <label className="label-mono">Status</label>
-            <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol">
-              <option value="a_fazer">A fazer</option>
-              <option value="em_andamento">Em andamento</option>
-              <option value="aguardando_terceiros">Aguardando terceiros</option>
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="label-mono">Status</label>
+              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol">
+                <option value="a_fazer">A fazer</option>
+                <option value="em_andamento">Em andamento</option>
+                <option value="aguardando_terceiros">Aguardando terceiros</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="label-mono">Repetir</label>
+              <select value={form.recorrencia} onChange={(e) => setForm({ ...form, recorrencia: e.target.value })}
+                className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol">
+                <option value="none">Nunca</option>
+                <option value="daily">Diariamente (4x)</option>
+                <option value="weekly">Semanalmente (4x)</option>
+                <option value="monthly">Mensalmente (4x)</option>
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="label-mono">Data</label>
+              <label className="label-mono">Data Inicial</label>
               <input type="date" required value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
                 className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol" />
             </div>
             <div className="space-y-1">
-              <label className="label-mono">Hora (opcional)</label>
+              <label className="label-mono">Hora</label>
               <input type="time" value={form.hora_inicio} onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
                 className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol" />
             </div>
@@ -160,7 +186,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           <div className="space-y-1">
             <label className="label-mono">Notas / Descrição</label>
             <textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-              className="w-full bg-transparent border border-line-strong p-2 text-sm focus:outline-none focus:border-petrol min-h-[100px] resize-none"
+              className="w-full bg-transparent border border-line-strong p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none"
               placeholder="Detalhes adicionais..." />
           </div>
         </form>

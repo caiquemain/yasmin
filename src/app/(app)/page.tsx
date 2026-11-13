@@ -4,13 +4,13 @@ import { Resumo } from '@/components/home/Resumo';
 import { ListaHoje } from '@/components/home/ListaHoje';
 import { Bloqueadas } from '@/components/home/Bloqueadas';
 import { GradeObras } from '@/components/home/GradeObras';
+import { EmptyStateObras } from '@/components/home/EmptyStateObras';
 
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ esc?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
   const { esc } = await searchParams;
 
   const { data: profile } = await supabase.from('profiles').select('nome').eq('id', user!.id).single();
@@ -33,7 +33,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       <Resumo obras={obras?.length ?? 0} bloqueadas={bloqueadas?.length ?? 0} tarefas={hoje?.length ?? 0} />
       <ListaHoje items={hoje ?? []} />
       <Bloqueadas items={bloqueadas ?? []} />
-      <GradeObras obras={obras ?? []} />
+      
+      {(!obras || obras.length === 0) && !esc ? (
+        <section>
+          <h2 className="label-mono border-b border-line pb-2 mb-0 !tracking-[0.14em]">Obras em andamento</h2>
+          <EmptyStateObras />
+        </section>
+      ) : (
+        <GradeObras obras={obras ?? []} />
+      )}
     </div>
   );
 }
