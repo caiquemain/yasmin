@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Camera, Loader2, Bell, BellRing } from 'lucide-react';
+import { PageTour } from '@/components/ui/PageTour';
 
 export function ConfigClient({ profile, escritorios: initialEscritorios, categorias: initialCategorias, userId }: any) {
   const supabase = createClient();
@@ -11,7 +12,6 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Estados para Notificações
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loadingPush, setLoadingPush] = useState(false);
   const [testandoPush, setTestandoPush] = useState(false);
@@ -22,11 +22,8 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
   const [categorias, setCategorias] = useState(initialCategorias);
   const [exportando, setExportando] = useState(false);
 
-  // Verifica se já tem permissão de notificação
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      setIsSubscribed(true);
-    }
+    if ('Notification' in window && Notification.permission === 'granted') setIsSubscribed(true);
   }, []);
 
   const savePerfil = async () => {
@@ -57,33 +54,13 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
   const ativarNotificacoes = async () => {
     try {
       setLoadingPush(true);
-      // Pede permissão ao usuário
       const permission = await Notification.requestPermission();
-      if (permission !== 'granted') {
-        alert('Você precisa permitir as notificações nas configurações do navegador.');
-        return;
-      }
-
-      // Registra o Service Worker e se inscreve
+      if (permission !== 'granted') { alert('Você precisa permitir as notificações nas configurações do navegador.'); return; }
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-      });
-
-      // Envia para o banco
-      await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(subscription)
-      });
-
+      const subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY });
+      await fetch('/api/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(subscription) });
       setIsSubscribed(true);
-    } catch (error: any) {
-      alert('Erro ao ativar notificações: ' + error.message);
-    } finally {
-      setLoadingPush(false);
-    }
+    } catch (error: any) { alert('Erro ao ativar notificações: ' + error.message); } finally { setLoadingPush(false); }
   };
 
   const testarNotificacao = async () => {
@@ -132,29 +109,33 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
 
   const urlICS = typeof window !== 'undefined' && profile?.calendar_token ? `${window.location.origin}/api/calendar/${profile.calendar_token}` : '';
 
+  const tourSteps = [
+    { element: 'body', popover: { title: 'Configurações', description: 'Aqui você ajusta o seu perfil e o comportamento do app.' } },
+    { element: '[data-tour="config-push"]', popover: { title: 'Notificações Push', description: 'Ative para receber lembretes no celular, mesmo com o app fechado!', side: 'bottom' as const, align: 'start' as const } },
+    { element: '[data-tour="config-perfil"]', popover: { title: 'Seu Perfil', description: 'Clique na foto para trocá-la e altere como quer ser chamada.', side: 'top' as const, align: 'start' as const } },
+    { element: '[data-tour="config-escritorios"]', popover: { title: 'Escritórios', description: 'Cadastre os escritórios onde você presta serviço. Isso organiza o filtro no topo do app.', side: 'top' as const, align: 'start' as const } },
+    { element: '[data-tour="config-categorias"]', popover: { title: 'Categorias', description: 'As categorias servem para organizar suas tarefas (Obras, Faculdade, Pessoal).', side: 'top' as const, align: 'start' as const } },
+    { element: '[data-tour="config-agenda"]', popover: { title: 'Sincronizar Agenda', description: 'Copie o link e adicione no Google Agenda. Suas tarefas vão aparecer lá automaticamente.', side: 'top' as const, align: 'start' as const } },
+    { element: '[data-tour="config-dados"]', popover: { title: 'Backup', description: 'Baixe um arquivo com todos os seus dados para nunca perder nada.', side: 'top' as const, align: 'start' as const } }
+  ];
+
   return (
     <div className="space-y-8 w-full max-w-full overflow-hidden">
-      
-      {/* NOVO: Seção de Notificações */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <PageTour storageKey="tour_config_v1" steps={tourSteps} />
+
+      <section data-tour="config-push" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Notificações Push</h2>
         <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Ative para receber lembretes no celular mesmo com o app fechado.</p>
-        
         <div className="flex flex-col md:flex-row gap-3">
           {!isSubscribed ? (
-            <button onClick={ativarNotificacoes} disabled={loadingPush} className="flex-1 flex items-center justify-center gap-2 py-3 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
-              <Bell size={18} /> {loadingPush ? 'Ativando...' : 'Ativar Notificações'}
-            </button>
+            <button onClick={ativarNotificacoes} disabled={loadingPush} className="flex-1 flex items-center justify-center gap-2 py-3 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50"><Bell size={18} /> {loadingPush ? 'Ativando...' : 'Ativar Notificações'}</button>
           ) : (
-            <button onClick={testarNotificacao} disabled={testandoPush} className="flex-1 flex items-center justify-center gap-2 py-3 border border-line-strong dark:border-dark-line text-petrol-deep dark:text-petrol text-sm font-medium hover:bg-bg dark:hover:bg-dark-bg transition disabled:opacity-50">
-              <BellRing size={18} /> {testandoPush ? 'Enviando...' : 'Enviar Notificação de Teste'}
-            </button>
+            <button onClick={testarNotificacao} disabled={testandoPush} className="flex-1 flex items-center justify-center gap-2 py-3 border border-line-strong dark:border-dark-line text-petrol-deep dark:text-petrol text-sm font-medium hover:bg-bg dark:hover:bg-dark-bg transition disabled:opacity-50"><BellRing size={18} /> {testandoPush ? 'Enviando...' : 'Enviar Notificação de Teste'}</button>
           )}
         </div>
       </section>
 
-      {/* Perfil */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <section data-tour="config-perfil" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6">Perfil</h2>
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center w-full">
           <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileInputRef.current?.click()}>
@@ -176,8 +157,7 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
         </div>
       </section>
 
-      {/* Escritórios */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <section data-tour="config-escritorios" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Escritórios</h2>
         <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Onde você presta serviço como calculista.</p>
         <ul className="space-y-2 mb-6 w-full">
@@ -189,39 +169,28 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
           ))}
         </ul>
         <form onSubmit={addEscritorio} className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
-          <div className="flex-1 space-y-1 w-full">
-            <label className="label-mono">Novo escritório</label>
-            <input type="text" value={novoEscritorio} onChange={e => setNovoEscritorio(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Escritório de Arquitetura" />
-          </div>
+          <div className="flex-1 space-y-1 w-full"><label className="label-mono">Novo escritório</label><input type="text" value={novoEscritorio} onChange={e => setNovoEscritorio(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Escritório de Arquitetura" /></div>
           <button type="submit" className="w-full md:w-auto px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink flex-shrink-0">Adicionar</button>
         </form>
       </section>
 
-      {/* Categorias */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <section data-tour="config-categorias" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Categorias</h2>
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 w-full">
           {categorias.map((c: any) => (
             <li key={c.id} className="flex justify-between items-center py-2 border-b border-dotted border-line dark:border-dark-line">
-              <div className="flex items-center gap-2 truncate pr-2">
-                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.cor }} />
-                <span className="text-sm text-ink dark:text-dark-ink truncate">{c.nome}</span>
-              </div>
+              <div className="flex items-center gap-2 truncate pr-2"><div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.cor }} /><span className="text-sm text-ink dark:text-dark-ink truncate">{c.nome}</span></div>
               <button onClick={() => deleteCategoria(c.id)} className="text-xs text-ink-faint dark:text-dark-inkSoft hover:text-terra transition flex-shrink-0">excluir</button>
             </li>
           ))}
         </ul>
         <form onSubmit={addCategoria} className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
-          <div className="flex-1 space-y-1 w-full">
-            <label className="label-mono">Nova categoria</label>
-            <input type="text" value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Reuniões" />
-          </div>
+          <div className="flex-1 space-y-1 w-full"><label className="label-mono">Nova categoria</label><input type="text" value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Reuniões" /></div>
           <button type="submit" className="w-full md:w-auto px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink flex-shrink-0">Adicionar</button>
         </form>
       </section>
 
-      {/* Sincronizar Agenda */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <section data-tour="config-agenda" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Sincronizar Agenda</h2>
         <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Adicione o link abaixo no seu Google Agenda (Outros calendários &gt; De URL).</p>
         <div className="flex flex-col md:flex-row gap-3 w-full">
@@ -230,8 +199,7 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
         </div>
       </section>
 
-      {/* Dados */}
-      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+      <section data-tour="config-dados" className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Dados</h2>
         <button onClick={exportarDados} disabled={exportando} className="w-full md:w-auto mt-4 px-6 py-2 bg-petrol text-bg label-mono hover:bg-petrol-deep transition">{exportando ? 'Gerando...' : 'Baixar Backup (JSON)'}</button>
       </section>
