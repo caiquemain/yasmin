@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yasmin · Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #FDF6F8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #4A2330;
+      padding: 24px;
+      text-align: center;
+    }
+    .container { max-width: 400px; }
+    .icon { font-size: 64px; margin-bottom: 24px; }
+    h1 { font-family: Georgia, serif; font-style: italic; font-size: 32px; color: #C85A7E; margin-bottom: 8px; }
+    .label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: #A88C95; margin-bottom: 32px; }
+    p { font-size: 14px; color: #7D5A66; line-height: 1.6; margin-bottom: 24px; }
+    button { background: #C85A7E; color: white; border: none; padding: 12px 24px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+    <h1>Yasmin.</h1>
+    <div class="label">Sem Conexão</div>
+    <p>Você está offline. Esta página ainda não foi carregada no dispositivo.</p>
+    <p>Mas fique tranquila: você ainda pode criar tarefas e elas serão salvas localmente!</p>
+    <button onclick="window.location.href='/'">Voltar ao Início</button>
+  </div>
+</body>
+</html>

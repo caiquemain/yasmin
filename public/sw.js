@@ -1,12 +1,8 @@
-const CACHE_NAME = 'yasmin-v5';
-const APP_SHELL = [
-  '/',
-  '/login',
-  '/manifest.webmanifest',
-  '/icon',
-];
+const CACHE_NAME = 'yasmin-v6';
+const APP_SHELL = ['/', '/login', '/manifest.webmanifest', '/icon'];
+const OFFLINE_PAGE = '/offline.html';
 
-// INSTALAÇÃO: guarda a casca do app em cache
+// INSTALAÇÃO
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
@@ -14,7 +10,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// ATIVAÇÃO: limpa caches antigos
+// ATIVAÇÃO
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -28,7 +24,7 @@ self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// PUSH: notificações
+// PUSH
 self.addEventListener('push', function(event) {
   let data = { title: 'Yasmin', body: 'Notificação!', url: '/' };
   if (event.data) {
@@ -46,36 +42,44 @@ self.addEventListener('notificationclick', function(event) {
   event.waitUntil(clients.openWindow(event.notification.data.url));
 });
 
-// FETCH: estratégia inteligente
+// FETCH
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Ignora métodos não-GET (POST, PUT, etc) - deixa passar direto pela rede
   if (request.method !== 'GET') return;
-
-  // Ignora requisições para o Supabase (API) - sempre vai pela rede
   if (url.hostname.includes('supabase.co')) return;
 
-  // Navegação (abrir páginas): NETWORK-FIRST com fallback para CACHE
+  // NAVEGAÇÃO (abrir páginas)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Atualiza o cache com a versão fresca
+          // Sucesso: guarda a página no cache para uso futuro offline
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => {
-          // Se falhar, serve do cache ou a home como fallback
-          return caches.match(request).then((cached) => cached || caches.match('/'));
+        .catch(async () => {
+          // Falhou: procura essa rota específica no cache
+          const cached = await caches.match(request);
+          if (cached) return cached;
+
+          // Se não encontrou, tenta o cache da home
+          const homeCached = await caches.match('/');
+          if (homeCached) {
+            // Retorna a home, mas avisa o app que a rota não está disponível
+            return homeCached;
+          }
+
+          // Último recurso: página offline
+          return caches.match(OFFLINE_PAGE) || new Response('Offline', { status: 503 });
         })
     );
     return;
   }
 
-  // Assets estáticos (JS, CSS, imagens): CACHE-FIRST (rápido e funciona offline)
+  // ASSETS (JS, CSS, imagens): cache-first
   if (url.origin === self.location.origin) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -86,7 +90,7 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           }
           return response;
-        }).catch(() => caches.match('/'));
+        }).catch(() => new Response('', { status: 503 }));
       })
     );
   }

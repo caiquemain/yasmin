@@ -10,6 +10,7 @@ import { Tutorial } from '../ui/Tutorial';
 import { useState } from 'react';
 import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useTrackRoute } from '@/hooks/useTrackRoute';
 
 const items = [
   { href: '/', label: 'Início', icon: Home, tour: 'home' },
@@ -27,6 +28,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const supabase = createClient();
 
   const active = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+  useTrackRoute();
 
   const handleLogout = async () => {
     if (!confirm('Tem certeza que quer sair?')) return;

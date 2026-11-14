@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'ne
 import { PwaRegister } from '@/components/PwaRegister';
 import { UpdateToast } from '@/components/ui/UpdateToast';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
+import { OfflineNavGuard } from '@/components/ui/OfflineNavGuard';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  viewportFit: 'cover', 
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <PwaRegister />
         <OfflineBanner />
+        <OfflineNavGuard />
         <UpdateToast />
         {children}
       </body>
