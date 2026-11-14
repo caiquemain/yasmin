@@ -16,6 +16,7 @@ export function useOfflineSync() {
 
       for (const action of queue) {
         if (action.type === 'create_demanda') {
+          // O payload já tem user_id agora (vem do QuickAdd)
           const payload = { ...action.payload, user_id: user.id };
           const { error } = await supabase.from('demandas').insert([payload]);
           
@@ -27,8 +28,6 @@ export function useOfflineSync() {
       }
 
       clearQueue();
-      
-      // Avisa a página para recarregar de forma controlada
       window.dispatchEvent(new CustomEvent('offline-sync-complete'));
     };
 
