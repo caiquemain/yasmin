@@ -9,17 +9,14 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
 
   const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  // Cálculos de totais
   const totalGeral = parcelas.reduce((acc, p) => acc + Number(p.valor), 0);
   const totalPago = parcelas.filter(p => p.status === 'pago').reduce((acc, p) => acc + Number(p.valor), 0);
   const totalPendente = parcelas.filter(p => p.status === 'pendente').reduce((acc, p) => acc + Number(p.valor), 0);
 
-  // Preparar dados para o gráfico (agrupados por mês)
   const chartData = useMemo(() => {
     const agrupado: Record<string, { mes: string; pago: number; pendente: number }> = {};
 
     parcelas.forEach(p => {
-      // Se não tiver data prevista, usa a data de criação como fallback
       const dataRef = p.data_prevista ? parseISO(p.data_prevista) : parseISO(p.created_at);
       const mesAno = format(dataRef, 'MMM/yy', { locale: ptBR });
       
@@ -37,12 +34,10 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
     return Object.values(agrupado);
   }, [parcelas]);
 
-  // Filtro da lista de parcelas
   const parcelasFiltradas = parcelas.filter(p => filtro === 'todos' ? true : p.status === filtro);
 
   return (
     <div className="space-y-10">
-      {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-line dark:bg-dark-line border border-line-strong dark:border-dark-line">
         <div className="bg-surface dark:bg-dark-surface p-6">
           <span className="label-mono block mb-2">Total Geral</span>
@@ -58,13 +53,12 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
         </div>
       </div>
 
-      {/* Gráfico de Evolução */}
       <section className="bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line p-6">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6">Evolução Mensal</h2>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-line)" className="dark:opacity-20" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2DDE2" />
               <XAxis 
                 dataKey="mes" 
                 axisLine={false} 
@@ -80,8 +74,8 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
               />
               <Tooltip 
                 cursor={{ fill: 'rgba(200, 90, 126, 0.05)' }}
-                contentStyle={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-line-strong)', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}
-                formatter={(value: number) => formatBRL(value)}
+                contentStyle={{ backgroundColor: '#FCEFF2', borderColor: '#D4AEB8', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}
+                formatter={(value: any) => formatBRL(Number(value))}
               />
               <Bar dataKey="pago" name="Recebido" stackId="a" fill="#C85A7E" radius={[0, 0, 0, 0]} />
               <Bar dataKey="pendente" name="A Receber" stackId="a" fill="#E08EA8" radius={[2, 2, 0, 0]} />
@@ -94,7 +88,6 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
         </div>
       </section>
 
-      {/* Lista de Parcelas */}
       <section>
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-line dark:border-dark-line pb-2 mb-4 gap-4">
           <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Detalhamento</h2>
