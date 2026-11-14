@@ -21,7 +21,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-bg dark:bg-dark-bg">
+    <div className="min-h-[100dvh] flex bg-bg dark:bg-dark-bg">
       <aside className="hidden lg:flex w-[42%] bg-petrol-deep text-bg p-16 flex-col justify-between">
         <div className="font-logo text-4xl">Yasmin<span className="text-terra">.</span></div>
         <div>

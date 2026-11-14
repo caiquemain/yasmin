@@ -5,6 +5,8 @@
 @layer base {
   html, body {
     @apply bg-bg dark:bg-dark-bg text-ink dark:text-dark-ink antialiased transition-colors duration-300;
+    overscroll-behavior-y: none; /* Evita o "puxar para atualizar" no Android */
+    min-height: 100dvh;
   }
   
   @media screen and (max-width: 768px) {

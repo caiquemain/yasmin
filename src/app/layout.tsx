@@ -19,13 +19,13 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: 'cover', // <-- ISSO É O SEGREDO PARA O POCO X7
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${serifLogo.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
-        {/* Script para aplicar o tema escuro antes da página renderizar (evita flash) */}
         <script dangerouslySetInnerHTML={{
           __html: `
             try {

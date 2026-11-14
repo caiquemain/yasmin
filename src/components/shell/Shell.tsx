@@ -23,7 +23,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
   const active = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
-    <div className="min-h-screen flex bg-bg dark:bg-dark-bg dark:bg-dark-bg text-ink dark:text-dark-ink dark:text-dark-ink transition-colors duration-300">
+    <div className="min-h-[100dvh] flex bg-bg dark:bg-dark-bg dark:bg-dark-bg text-ink dark:text-dark-ink dark:text-dark-ink transition-colors duration-300">
       
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-60 bg-surface dark:bg-dark-surface dark:bg-dark-surface border-r border-line dark:border-dark-line-strong dark:border-dark-line dark:border-dark-line flex-col py-6 shrink-0 transition-colors">
