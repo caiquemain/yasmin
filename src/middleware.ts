@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Permite acesso livre aos arquivos essenciais do PWA
-  const publicPaths = ['/manifest.webmanifest', '/sw.js', '/icon', '/apple-icon'];
+  // Permite acesso livre aos arquivos essenciais do PWA e à API pública do calendário
+  const publicPaths = ['/manifest.webmanifest', '/sw.js', '/icon', '/apple-icon', '/api/calendar'];
   if (publicPaths.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
