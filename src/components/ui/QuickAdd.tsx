@@ -10,6 +10,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [obras, setObras] = useState<any[]>([]);
+  const [savedOffline, setSavedOffline] = useState(false);
 
   const [form, setForm] = useState({
     tipo: 'tarefa', titulo: '', descricao: '', categoria_id: '', obra_id: '', revisao: '',
@@ -25,6 +26,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
   useEffect(() => {
     if (isOpen) {
+      setSavedOffline(false);
       supabase.from('categorias').select('id, nome').order('ordem').then(({ data }) => setCategorias(data || []));
       supabase.from('obras').select('id, nome, clientes(nome)').order('created_at', { ascending: false }).then(({ data }) => setObras(data || []));
     }
@@ -35,7 +37,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
     const basePayload = {
       tipo: form.tipo, titulo: form.titulo, descricao: form.descricao || null,
@@ -61,34 +63,39 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       }
     }
 
-    // --- AQUI ESTÁ A MÁGICA DO OFFLINE ---
+    // OFFLINE: salva na fila e fecha o modal sem recarregar
     if (!navigator.onLine) {
-      // Se estiver offline, joga na fila local
       payloads.forEach(p => enqueueAction('create_demanda', p));
       setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
-      onClose();
-      window.location.reload(); 
+      setSavedOffline(true);
+      setLoading(false);
+      // Fecha o modal após 1.5s para a pessoa ver a mensagem
+      setTimeout(() => { onClose(); }, 1500);
+      return;
+    }
+
+    // ONLINE: envia direto
+    const { error } = await supabase.from('demandas').insert(payloads);
+    
+    if (error) {
+      if (error.message.includes('fetch') || error.message.includes('network')) {
+        payloads.forEach(p => enqueueAction('create_demanda', p));
+        setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
+        setSavedOffline(true);
+        setLoading(false);
+        setTimeout(() => { onClose(); }, 1500);
+        return;
+      }
+      alert('Erro ao salvar: ' + error.message);
       setLoading(false);
       return;
     }
 
-    // Se estiver online, tenta enviar direto
-    const { error } = await supabase.from('demandas').insert(payloads);
-    
-    if (error) {
-      // Se der erro de rede, salva na fila offline como fallback
-      if (error.message.includes('fetch')) {
-        payloads.forEach(p => enqueueAction('create_demanda', p));
-        alert('Sem conexão. Tarefa salva localmente e será sincronizada.');
-      } else {
-        alert('Erro ao salvar: ' + error.message);
-      }
-    } else {
-      setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
-      onClose();
-      window.location.reload(); 
-    }
-    setLoading(false);
+    // Sucesso online
+    setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
+    onClose();
+    // Recarrega só se estiver online e der certo
+    window.location.reload();
   };
 
   if (!isOpen) return null;
@@ -103,108 +110,120 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           <button onClick={onClose} className="text-ink-soft dark:text-dark-inkSoft hover:text-ink transition"><X size={20} strokeWidth={1.5} /></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex gap-2 p-1 bg-surface dark:bg-dark-bg border border-line-strong dark:border-dark-line">
-            {['tarefa', 'compromisso'].map((t) => (
-              <button key={t} type="button" onClick={() => setForm({ ...form, tipo: t })}
-                className={`flex-1 py-1.5 text-sm capitalize transition ${form.tipo === t ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>
-                {t}
-              </button>
-            ))}
+        {savedOffline ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-amber/20 flex items-center justify-center mb-4">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber"><path d="M20 6L9 17l-5-5"/></svg>
+            </div>
+            <h3 className="font-serif text-xl text-petrol-deep dark:text-petrol mb-2">Salvo localmente!</h3>
+            <p className="text-sm text-ink-soft dark:text-dark-inkSoft max-w-xs">Sua tarefa foi guardada no celular. Assim que a internet voltar, ela será sincronizada automaticamente.</p>
           </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex gap-2 p-1 bg-surface dark:bg-dark-bg border border-line-strong dark:border-dark-line">
+              {['tarefa', 'compromisso'].map((t) => (
+                <button key={t} type="button" onClick={() => setForm({ ...form, tipo: t })}
+                  className={`flex-1 py-1.5 text-sm capitalize transition ${form.tipo === t ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
 
-          <div className="space-y-1">
-            <label className="label-mono">Título</label>
-            <input required value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-              className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
-              placeholder="Ex: Revisar pranchas Ed. Aurora" />
+            <div className="space-y-1">
+              <label className="label-mono">Título</label>
+              <input required value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
+                placeholder="Ex: Revisar pranchas Ed. Aurora" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="label-mono">Categoria</label>
+                <select value={form.categoria_id} onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
+                  <option value="">Nenhuma</option>
+                  {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Vincular Obra</label>
+                <select value={form.obra_id} onChange={(e) => setForm({ ...form, obra_id: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
+                  <option value="">Nenhuma</option>
+                  {obras.map(o => <option key={o.id} value={o.id}>{o.clientes?.nome} - {o.nome}</option>)}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="label-mono">Revisão</label>
+                <input value={form.revisao} onChange={(e) => setForm({ ...form, revisao: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
+                  placeholder="Ex: R01" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Prioridade</label>
+                <select value={form.prioridade} onChange={(e) => setForm({ ...form, prioridade: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
+                  <option value="baixa">Baixa</option>
+                  <option value="media">Média</option>
+                  <option value="alta">Alta</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="label-mono">Status</label>
+                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
+                  <option value="a_fazer">A fazer</option>
+                  <option value="em_andamento">Em andamento</option>
+                  <option value="aguardando_terceiros">Aguardando terceiros</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Repetir</label>
+                <select value={form.recorrencia} onChange={(e) => setForm({ ...form, recorrencia: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
+                  <option value="none">Nunca</option>
+                  <option value="daily">Diariamente (4x)</option>
+                  <option value="weekly">Semanalmente (4x)</option>
+                  <option value="monthly">Mensalmente (4x)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="label-mono">Data Inicial</label>
+                <input type="date" required value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
+              </div>
+              <div className="space-y-1">
+                <label className="label-mono">Hora</label>
+                <input type="time" value={form.hora_inicio} onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
+                  className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="label-mono">Notas / Descrição</label>
+              <textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                className="w-full bg-transparent border border-line-strong dark:border-dark-line p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
+                placeholder="Detalhes adicionais..." />
+            </div>
+          </form>
+        )}
+
+        {!savedOffline && (
+          <div className="p-4 border-t border-line dark:border-dark-line bg-surface dark:bg-dark-surface">
+            <button onClick={handleSubmit} disabled={loading} className="w-full py-3 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
+              {loading ? 'Salvando...' : 'Salvar demanda'}
+            </button>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="label-mono">Categoria</label>
-              <select value={form.categoria_id} onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
-                <option value="">Nenhuma</option>
-                {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="label-mono">Vincular Obra</label>
-              <select value={form.obra_id} onChange={(e) => setForm({ ...form, obra_id: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
-                <option value="">Nenhuma</option>
-                {obras.map(o => <option key={o.id} value={o.id}>{o.clientes?.nome} - {o.nome}</option>)}
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="label-mono">Revisão</label>
-              <input value={form.revisao} onChange={(e) => setForm({ ...form, revisao: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
-                placeholder="Ex: R01" />
-            </div>
-            <div className="space-y-1">
-              <label className="label-mono">Prioridade</label>
-              <select value={form.prioridade} onChange={(e) => setForm({ ...form, prioridade: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
-                <option value="baixa">Baixa</option>
-                <option value="media">Média</option>
-                <option value="alta">Alta</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="label-mono">Status</label>
-              <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
-                <option value="a_fazer">A fazer</option>
-                <option value="em_andamento">Em andamento</option>
-                <option value="aguardando_terceiros">Aguardando terceiros</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="label-mono">Repetir</label>
-              <select value={form.recorrencia} onChange={(e) => setForm({ ...form, recorrencia: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
-                <option value="none">Nunca</option>
-                <option value="daily">Diariamente (4x)</option>
-                <option value="weekly">Semanalmente (4x)</option>
-                <option value="monthly">Mensalmente (4x)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="label-mono">Data Inicial</label>
-              <input type="date" required value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
-            </div>
-            <div className="space-y-1">
-              <label className="label-mono">Hora</label>
-              <input type="time" value={form.hora_inicio} onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="label-mono">Notas / Descrição</label>
-            <textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-              className="w-full bg-transparent border border-line-strong dark:border-dark-line p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
-              placeholder="Detalhes adicionais..." />
-          </div>
-        </form>
-
-        <div className="p-4 border-t border-line dark:border-dark-line bg-surface dark:bg-dark-surface">
-          <button onClick={handleSubmit} disabled={loading} className="w-full py-3 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
-            {loading ? 'Salvando...' : 'Salvar demanda'}
-          </button>
-        </div>
+        )}
       </div>
     </>
   );

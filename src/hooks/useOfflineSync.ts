@@ -7,7 +7,6 @@ export function useOfflineSync() {
   const supabase = createClient();
 
   useEffect(() => {
-    // Função que varre a fila e envia para o Supabase
     const syncQueue = async () => {
       const queue = getQueue();
       if (queue.length === 0) return;
@@ -15,39 +14,29 @@ export function useOfflineSync() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Processa item por item
       for (const action of queue) {
         if (action.type === 'create_demanda') {
           const payload = { ...action.payload, user_id: user.id };
           const { error } = await supabase.from('demandas').insert([payload]);
           
-          // Se deu erro, pula esse item para tentar de novo na próxima
           if (error) {
             console.error('Falha ao sincronizar item:', error);
-            return; // Para o loop para não perder dados
+            return;
           }
         }
       }
 
-      // Se chegou até aqui, tudo foi sincronizado com sucesso
       clearQueue();
       
-      // Opcional: forçar um refresh na tela para aparecer as tarefas novas
-      if (window.location.pathname === '/' || window.location.pathname === '/agenda') {
-        window.location.reload();
-      }
+      // Avisa a página para recarregar de forma controlada
+      window.dispatchEvent(new CustomEvent('offline-sync-complete'));
     };
 
-    // Executa ao abrir o app
     if (navigator.onLine) syncQueue();
 
-    // Fica ouvindo o evento de reconexão
-    const handleOnline = () => {
-      syncQueue();
-    };
+    const handleOnline = () => syncQueue();
     window.addEventListener('online', handleOnline);
 
-    // Intervalo de segurança a cada 30s
     const interval = setInterval(() => {
       if (navigator.onLine) syncQueue();
     }, 30000);
