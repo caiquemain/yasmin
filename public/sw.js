@@ -1,16 +1,19 @@
 const CACHE_NAME = 'yasmin-v1';
-const urlsToCache = ['/'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-  );
+  self.skipWaiting();
 });
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+// Handler fetch obrigatório para o Chrome Android considerar o app instalável
 self.addEventListener('fetch', (event) => {
+  // Estratégia simples: rede primeiro, cache como fallback
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request);
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
