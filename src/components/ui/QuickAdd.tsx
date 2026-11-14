@@ -1,14 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useEscape } from '@/hooks/useEscape';
 import { createClient } from '@/lib/supabase/client';
-import { X } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format } from 'date-fns';
+import { X } from 'lucide-react';
 
 export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-  useEscape(onClose, isOpen);
   
   const [categorias, setCategorias] = useState<any[]>([]);
   const [obras, setObras] = useState<any[]>([]);
@@ -24,8 +22,19 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     prioridade: 'media',
     data: new Date().toLocaleDateString('sv-SE'),
     hora_inicio: '',
-    recorrencia: 'none', // none, daily, weekly, monthly
+    recorrencia: 'none',
   });
+
+  // ESC Listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen) {
@@ -57,25 +66,22 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
     let payloads = [];
     const parentId = crypto.randomUUID();
-    const dataBase = new Date(form.data + 'T12:00:00'); // Meio-dia para evitar fuso
+    const dataBase = new Date(form.data + 'T12:00:00');
 
     if (form.recorrencia === 'none') {
       payloads.push({ ...basePayload, data: form.data, parent_id: parentId });
     } else {
-      // Materializa as próximas ocorrências (ex: 4 semanas)
       const numOcorrencias = 4;
       for (let i = 0; i < numOcorrencias; i++) {
         let novaData = dataBase;
         if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
         if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
         if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
-
         payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
       }
     }
 
     const { error } = await supabase.from('demandas').insert(payloads);
-
     if (error) {
       alert('Erro ao salvar: ' + error.message);
     } else {
@@ -91,18 +97,18 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-50 transition-opacity" onClick={onClose} />
-      <div className="fixed z-50 flex flex-col bg-bg dark:bg-dark-bg border-line dark:border-dark-line-strong dark:border-dark-line shadow-2xl overflow-hidden inset-x-0 bottom-0 h-[100dvh] border-t md:inset-y-0 md:right-0 md:left-auto md:w-[480px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
+      <div className="fixed z-50 flex flex-col bg-bg dark:bg-dark-surface border-line-strong dark:border-dark-line shadow-2xl overflow-hidden inset-x-0 bottom-0 h-[100dvh] border-t md:inset-y-0 md:right-0 md:left-auto md:w-[480px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
         
         <div className="flex items-center justify-between px-6 py-4 border-b border-line dark:border-dark-line">
           <h2 className="font-serif text-xl text-petrol-deep dark:text-petrol">Nova demanda</h2>
-          <button onClick={onClose} className="text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft hover:text-ink dark:text-dark-ink transition"><X size={20} strokeWidth={1.5} /></button>
+          <button onClick={onClose} className="text-ink-soft dark:text-dark-inkSoft hover:text-ink transition"><X size={20} strokeWidth={1.5} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line dark:border-dark-line-strong dark:border-dark-line">
+          <div className="flex gap-2 p-1 bg-surface dark:bg-dark-bg border border-line-strong dark:border-dark-line">
             {['tarefa', 'compromisso'].map((t) => (
               <button key={t} type="button" onClick={() => setForm({ ...form, tipo: t })}
-                className={`flex-1 py-1.5 text-sm capitalize transition ${form.tipo === t ? 'bg-petrol text-bg' : 'text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft hover:bg-line/50'}`}>
+                className={`flex-1 py-1.5 text-sm capitalize transition ${form.tipo === t ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>
                 {t}
               </button>
             ))}
@@ -111,7 +117,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           <div className="space-y-1">
             <label className="label-mono">Título</label>
             <input required value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-              className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol placeholder:text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft"
+              className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
               placeholder="Ex: Revisar pranchas Ed. Aurora" />
           </div>
 
@@ -119,7 +125,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Categoria</label>
               <select value={form.categoria_id} onChange={(e) => setForm({ ...form, categoria_id: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol">
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
                 <option value="">Nenhuma</option>
                 {categorias.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
               </select>
@@ -127,7 +133,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Vincular Obra</label>
               <select value={form.obra_id} onChange={(e) => setForm({ ...form, obra_id: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol">
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
                 <option value="">Nenhuma</option>
                 {obras.map(o => <option key={o.id} value={o.id}>{o.clientes?.nome} - {o.nome}</option>)}
               </select>
@@ -138,13 +144,13 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Revisão</label>
               <input value={form.revisao} onChange={(e) => setForm({ ...form, revisao: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol placeholder:text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft"
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
                 placeholder="Ex: R01" />
             </div>
             <div className="space-y-1">
               <label className="label-mono">Prioridade</label>
               <select value={form.prioridade} onChange={(e) => setForm({ ...form, prioridade: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol">
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
                 <option value="baixa">Baixa</option>
                 <option value="media">Média</option>
                 <option value="alta">Alta</option>
@@ -156,7 +162,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Status</label>
               <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol">
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
                 <option value="a_fazer">A fazer</option>
                 <option value="em_andamento">Em andamento</option>
                 <option value="aguardando_terceiros">Aguardando terceiros</option>
@@ -165,7 +171,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Repetir</label>
               <select value={form.recorrencia} onChange={(e) => setForm({ ...form, recorrencia: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol">
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink">
                 <option value="none">Nunca</option>
                 <option value="daily">Diariamente (4x)</option>
                 <option value="weekly">Semanalmente (4x)</option>
@@ -178,19 +184,19 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
             <div className="space-y-1">
               <label className="label-mono">Data Inicial</label>
               <input type="date" required value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol" />
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
             </div>
             <div className="space-y-1">
               <label className="label-mono">Hora</label>
               <input type="time" value={form.hora_inicio} onChange={(e) => setForm({ ...form, hora_inicio: e.target.value })}
-                className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol" />
+                className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="label-mono">Notas / Descrição</label>
             <textarea value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-              className="w-full bg-transparent border border-line dark:border-dark-line-strong dark:border-dark-line p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none"
+              className="w-full bg-transparent border border-line-strong dark:border-dark-line p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none text-ink dark:text-dark-ink placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft"
               placeholder="Detalhes adicionais..." />
           </div>
         </form>

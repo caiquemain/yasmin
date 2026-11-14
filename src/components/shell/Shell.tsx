@@ -85,8 +85,10 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-1 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
+      {/* Bottom Bar (Mobile) - Perfeitamente Alinhada */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
+        
+        {/* Itens da Esquerda */}
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);
@@ -98,13 +100,18 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
           );
         })}
         
-        <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
-          <button onClick={() => setIsQuickAddOpen(true)} className="absolute -top-5 w-14 h-14 bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-            <Plus size={24} strokeWidth={2} />
+        {/* FAB Central - Alinhado e do mesmo tamanho */}
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[56px]">
+          <button 
+            onClick={() => setIsQuickAddOpen(true)} 
+            className="w-[32px] h-[32px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform"
+          >
+            <Plus size={20} strokeWidth={2.5} />
           </button>
         </div>
 
-        {items.slice(2).map((it) => {
+        {/* Itens da Direita */}
+        {items.slice(2, 4).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);
           return (
