@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'next/font/google';
 import { PwaRegister } from '@/components/PwaRegister';
 import { UpdateToast } from '@/components/ui/UpdateToast';
+import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PwaRegister />
+        <OfflineBanner />
         <UpdateToast />
         {children}
       </body>
