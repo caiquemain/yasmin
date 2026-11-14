@@ -19,8 +19,6 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
           popover: {
             title: 'Bem-vinda ao Yasmin!',
             description: 'Este é o seu caderno técnico digital. Vamos fazer um tour rápido para você explorar tudo o que ele pode fazer pelo seu dia.',
-            side: 'over',
-            align: 'center'
           }
         },
         {
@@ -109,8 +107,6 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
         popover: {
           title: 'Tudo pronto! 🚀',
           description: 'Agora você tem o controle total do seu dia e dos seus projetos. Bom trabalho!',
-          side: 'over',
-          align: 'center'
         }
       });
 
