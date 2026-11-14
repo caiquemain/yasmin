@@ -1,5 +1,5 @@
 'use client';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import { Joyride, CallBackProps, STATUS, Step } from 'react-joyride';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
