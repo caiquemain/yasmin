@@ -13,10 +13,19 @@ export async function createClient() {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
+          try {
+            cookieStore.set({ name, value, ...options });
+          } catch (error) {
+            // O Next.js bloqueia modificação de cookies em Server Components (como o Layout).
+            // Ignoramos o erro porque o middleware.ts é quem cuida da renovação da sessão.
+          }
         },
         remove(name: string, options: any) {
-          cookieStore.set({ name, value: '', ...options });
+          try {
+            cookieStore.set({ name, value: '', ...options });
+          } catch (error) {
+            // Mesma coisa aqui.
+          }
         },
       },
     }
