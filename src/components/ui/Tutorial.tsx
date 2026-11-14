@@ -1,7 +1,11 @@
 'use client';
-import { Joyride, CallBackProps, STATUS, Step } from 'react-joyride';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import * as ReactJoyride from 'react-joyride';
+import { CallBackProps, STATUS, Step } from 'react-joyride';
+
+// Compatibilidade com a forma que a lib se exporta no Turbopack
+const Joyride = (ReactJoyride as any).Joyride || (ReactJoyride as any).default;
 
 export function Tutorial({ userId, concluido }: { userId: string, concluido: boolean }) {
   const [run, setRun] = useState(!concluido);
@@ -110,12 +114,11 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
 
     if (finishedStatuses.includes(status)) {
       setRun(false);
-      // Salva no banco que a pessoa já viu o tutorial
       await supabase.from('profiles').update({ tutorial_concluido: true }).eq('id', userId);
     }
   };
 
-  if (!run) return null;
+  if (!run || !Joyride) return null;
 
   return (
     <Joyride
@@ -129,11 +132,11 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
       locale={{ back: 'Voltar', close: 'Fechar', last: 'Concluir', next: 'Próximo', skip: 'Pular tutorial' }}
       styles={{
         options: {
-          primaryColor: '#C85A7E', // Rosa principal
-          backgroundColor: '#FDF6F8', // Fundo claro
-          textColor: '#4A2330', // Vinho escuro
+          primaryColor: '#C85A7E',
+          backgroundColor: '#FDF6F8',
+          textColor: '#4A2330',
           arrowColor: '#FDF6F8',
-          overlayColor: 'rgba(26, 18, 20, 0.8)', // Overlay escuro amadeirado
+          overlayColor: 'rgba(26, 18, 20, 0.8)',
           zIndex: 10000,
         },
         tooltip: {
