@@ -1,11 +1,13 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Camera, Loader2, Bell, BellRing } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Camera, Loader2, Bell, BellRing, LogOut } from 'lucide-react';
 import { PageTour } from '@/components/ui/PageTour';
 
 export function ConfigClient({ profile, escritorios: initialEscritorios, categorias: initialCategorias, userId }: any) {
   const supabase = createClient();
+  const router = useRouter();
   const [nome, setNome] = useState(profile?.nome || '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
   const [loadingPerfil, setLoadingPerfil] = useState(false);
@@ -21,10 +23,18 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
   const [novaCategoria, setNovaCategoria] = useState('');
   const [categorias, setCategorias] = useState(initialCategorias);
   const [exportando, setExportando] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     if ('Notification' in window && Notification.permission === 'granted') setIsSubscribed(true);
   }, []);
+
+  const handleLogout = async () => {
+    if (!confirm('Tem certeza que quer sair?')) return;
+    setLogoutLoading(true);
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   const savePerfil = async () => {
     setLoadingPerfil(true);
@@ -154,6 +164,18 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
               <button onClick={savePerfil} disabled={loadingPerfil} className="w-full md:w-auto px-6 py-2 bg-petrol-deep text-bg label-mono hover:bg-petrol transition flex-shrink-0">{loadingPerfil ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
+        </div>
+
+        {/* Botão de Logout */}
+        <div className="mt-6 pt-6 border-t border-dashed border-line dark:border-dark-line">
+          <button
+            onClick={handleLogout}
+            disabled={logoutLoading}
+            className="flex items-center gap-2 px-4 py-2 border border-terra text-terra hover:bg-terra hover:text-bg transition label-mono text-xs disabled:opacity-50"
+          >
+            <LogOut size={14} />
+            {logoutLoading ? 'Saindo...' : 'Sair da Conta'}
+          </button>
         </div>
       </section>
 
