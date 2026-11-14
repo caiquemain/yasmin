@@ -25,6 +25,7 @@
     "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.6.2",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
