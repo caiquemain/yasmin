@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Check } from 'lucide-react';
 import Link from 'next/link';
 
 export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas }: { obra: any, checklist: any[], initialParcelas: any[] }) {
@@ -123,7 +124,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
               {checklist.map((item, i) => (
                 <li key={item.id} className="flex items-center gap-4 py-3 border-b border-dotted border-line last:border-0 group cursor-pointer" onClick={() => toggleChecklist(item.id, item.concluido)}>
                   <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${item.concluido ? 'bg-petrol border-petrol' : 'border-line-strong group-hover:border-petrol'}`}>
-                    {item.concluido && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-bg" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                    {item.concluido && <Check size={14} className="text-bg" strokeWidth={3} />}
                   </div>
                   <span className={`text-[14.5px] flex-1 transition-opacity ${item.concluido ? 'opacity-50 line-through' : ''}`}>
                     <span className="font-mono text-xs text-ink-faint mr-2">0{i+1}</span>
@@ -165,7 +166,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
                 {parcelas.map((p) => (
                   <li key={p.id} className="flex items-center gap-4 p-3 border border-line-strong bg-surface group">
                     <button onClick={() => toggleParcela(p.id, p.status)} className={`w-5 h-5 border flex flex-shrink-0 items-center justify-center transition-colors ${p.status === 'pago' ? 'bg-petrol border-petrol' : 'border-line-strong group-hover:border-petrol'}`}>
-                      {p.status === 'pago' && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-bg" strokeWidth="3"><path d="M20 6L9 17l-5-5"/></svg>}
+                      {p.status === 'pago' && <Check size={14} className="text-bg" strokeWidth={3} />}
                     </button>
                     <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
                       <div>

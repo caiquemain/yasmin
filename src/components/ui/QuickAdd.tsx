@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { X } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format } from 'date-fns';
 
 export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
@@ -91,7 +92,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <h2 className="font-serif text-xl text-petrol-deep">Nova demanda</h2>
-          <button onClick={onClose} className="text-ink-soft hover:text-ink">✕</button>
+          <button onClick={onClose} className="text-ink-soft hover:text-ink transition"><X size={20} strokeWidth={1.5} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">

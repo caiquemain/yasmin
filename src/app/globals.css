@@ -4,10 +4,9 @@
 
 @layer base {
   html, body {
-    @apply bg-bg text-ink antialiased;
+    @apply bg-bg dark:bg-dark-bg text-ink dark:text-dark-ink antialiased transition-colors duration-300;
   }
   
-  /* Evita o zoom automático no iOS em inputs */
   @media screen and (max-width: 768px) {
     input, select, textarea {
       font-size: 16px !important;
@@ -17,6 +16,6 @@
 
 @layer utilities {
   .label-mono {
-    @apply font-mono text-2xs uppercase tracking-[0.1em] text-ink-soft;
+    @apply font-mono text-2xs uppercase tracking-[0.1em] text-ink-soft dark:text-dark-inkSoft;
   }
 }

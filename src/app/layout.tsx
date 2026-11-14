@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
-import { PwaRegister } from "@/components/PwaRegister";
 import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'next/font/google';
+import { PwaRegister } from '@/components/PwaRegister';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
@@ -23,7 +23,21 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${serifLogo.variable} ${mono.variable}`}>
+    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${serifLogo.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Script para aplicar o tema escuro antes da página renderizar (evita flash) */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            try {
+              if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark')
+              } else {
+                document.documentElement.classList.remove('dark')
+              }
+            } catch (_) {}
+          `
+        }} />
+      </head>
       <body>
         <PwaRegister />
         {children}
