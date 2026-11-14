@@ -4,10 +4,11 @@ import autoTable from 'jspdf-autotable';
 export async function generateObraPDF(obra: any, checklist: any[], parcelas: any[]) {
   const doc = new jsPDF();
   
-  // Cores do nosso design system
-  const primaryColor = [200, 90, 126]; // Rosa
-  const darkColor = [74, 35, 48]; // Vinho escuro
-  const grayColor = [168, 140, 149]; // Cinza rosado
+  // Cores do nosso design system tipadas corretamente (Tupla RGB)
+  const primaryColor: [number, number, number] = [200, 90, 126]; // Rosa
+  const darkColor: [number, number, number] = [74, 35, 48]; // Vinho escuro
+  const grayColor: [number, number, number] = [168, 140, 149]; // Cinza rosado
+  const bgLightColor: [number, number, number] = [253, 246, 248]; // Fundo rosado clarinho
 
   // --- CABEÇALHO ---
   doc.setFont('times', 'bold');
@@ -84,7 +85,7 @@ export async function generateObraPDF(obra: any, checklist: any[], parcelas: any
     theme: 'plain',
     styles: { font: 'helvetica', fontSize: 9, textColor: darkColor },
     headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [253, 246, 248] },
+    alternateRowStyles: { fillColor: bgLightColor },
     columnStyles: {
       0: { cellWidth: 15 },
       2: { cellWidth: 30, halign: 'center' }
@@ -122,7 +123,7 @@ export async function generateObraPDF(obra: any, checklist: any[], parcelas: any
     theme: 'plain',
     styles: { font: 'helvetica', fontSize: 9, textColor: darkColor },
     headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
-    alternateRowStyles: { fillColor: [253, 246, 248] },
+    alternateRowStyles: { fillColor: bgLightColor },
     columnStyles: {
       2: { halign: 'center' },
       3: { halign: 'right' }
