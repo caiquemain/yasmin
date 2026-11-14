@@ -21,3 +21,49 @@
     @apply font-mono text-2xs uppercase tracking-[0.1em] text-ink-soft dark:text-dark-inkSoft;
   }
 }
+
+/* ===== CUSTOMIZAÇÃO DO DRIVER.JS (TUTORIAL) ===== */
+.yasmin-tour-theme {
+  --driver-popover-bg: #FDF6F8;
+  --driver-popover-text: #4A2330;
+  --driver-popover-title-color: #C85A7E;
+  --driver-popover-btn-next-bg: #C85A7E;
+  --driver-popover-btn-next-text: #FDF6F8;
+  --driver-popover-btn-prev-bg: transparent;
+  --driver-popover-btn-prev-text: #A88C95;
+  --driver-popover-btn-close-color: #A88C95;
+  --driver-popover-arrow-color: #FDF6F8;
+  --driver-popover-border-radius: 4px;
+  --driver-popover-padding: 20px;
+  --driver-popover-font-family: var(--font-plex-sans);
+}
+
+.dark .yasmin-tour-theme {
+  --driver-popover-bg: #261A1D;
+  --driver-popover-text: #FDF6F8;
+  --driver-popover-arrow-color: #261A1D;
+  --driver-popover-border-color: #3D2B30;
+}
+
+.yasmin-tour-theme .driver-popover-title {
+  font-family: var(--font-plex-serif);
+  font-size: 1.5rem;
+}
+
+.yasmin-tour-theme .driver-popover-description {
+  font-size: 0.875rem;
+}
+
+.yasmin-tour-theme .driver-popover-footer button {
+  border-radius: 0;
+  text-transform: uppercase;
+  font-family: var(--font-plex-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  padding: 8px 16px;
+  text-shadow: none;
+}
+
+.yasmin-tour-theme .driver-popover-footer {
+  margin-top: 16px;
+}
