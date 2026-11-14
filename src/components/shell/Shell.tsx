@@ -64,8 +64,15 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
           </Link>
         </nav>
 
-        <div className="mt-auto px-6 pt-4 border-t border-line dark:border-dark-line flex items-center gap-2 label-mono">
-          <span className="w-7 h-7 flex items-center justify-center bg-petrol text-bg font-serif text-sm tracking-normal">{profile?.nome?.[0]?.toUpperCase() ?? 'Y'}</span>
+        {/* Profile Section Desktop */}
+        <div className="mt-auto px-6 pt-4 border-t border-line dark:border-dark-line flex items-center gap-3 label-mono">
+          <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-petrol text-bg font-serif text-sm tracking-normal overflow-hidden rounded-full">
+            {profile?.avatar_url ? (
+              <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              profile?.nome?.[0]?.toUpperCase() ?? 'Y'
+            )}
+          </div>
           <span className="truncate">{profile?.nome ?? 'Yasmin'}</span>
         </div>
       </aside>
@@ -85,10 +92,8 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) - Perfeitamente Alinhada */}
+      {/* Bottom Bar (Mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
-        
-        {/* Itens da Esquerda */}
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);
@@ -100,17 +105,13 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
           );
         })}
         
-        {/* FAB Central - Alinhado e do mesmo tamanho */}
+        {/* FAB Central */}
         <div className="flex-1 flex flex-col items-center justify-center min-h-[56px]">
-          <button 
-            onClick={() => setIsQuickAddOpen(true)} 
-            className="w-[32px] h-[32px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform"
-          >
+          <button onClick={() => setIsQuickAddOpen(true)} className="w-[32px] h-[32px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform">
             <Plus size={20} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* Itens da Direita */}
         {items.slice(2, 4).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);

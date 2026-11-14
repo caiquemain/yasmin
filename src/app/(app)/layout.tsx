@@ -10,7 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect('/login');
 
   const [{ data: profile }, { data: escritorios }, { count: pendCount }] = await Promise.all([
-    supabase.from('profiles').select('nome').eq('id', user.id).single(),
+    supabase.from('profiles').select('nome, avatar_url').eq('id', user.id).single(),
     supabase.from('escritorios').select('id,nome').eq('arquivado', false).order('ordem'),
     supabase.from('demandas').select('*', { count: 'exact', head: true }).eq('status', 'aguardando_terceiros'),
   ]);
