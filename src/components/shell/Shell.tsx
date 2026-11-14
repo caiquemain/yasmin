@@ -1,13 +1,15 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { EscritorioFilter } from './EscritorioFilter';
 import { QuickAdd } from '../ui/QuickAdd';
 import { SearchModal } from '../ui/SearchModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { Tutorial } from '../ui/Tutorial';
 import { useState } from 'react';
-import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search } from 'lucide-react';
+import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 const items = [
   { href: '/', label: 'Início', icon: Home, tour: 'home' },
@@ -21,8 +23,16 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const search = useSearchParams();
   const escAtual = search.get('esc') ?? 'todos';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const router = useRouter();
+  const supabase = createClient();
 
   const active = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
+
+  const handleLogout = async () => {
+    if (!confirm('Tem certeza que quer sair?')) return;
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
   return (
     <div className="min-h-[100dvh] flex bg-bg dark:bg-dark-bg text-ink dark:text-dark-ink transition-colors duration-300">
@@ -70,11 +80,19 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           </Link>
         </nav>
 
-        <div className="mt-auto px-6 pt-4 border-t border-line dark:border-dark-line flex items-center gap-3 label-mono" data-tour="avatar">
-          <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-petrol text-bg font-serif text-sm tracking-normal overflow-hidden rounded-full">
-            {profile?.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : profile?.nome?.[0]?.toUpperCase() ?? 'Y'}
+        {/* Perfil e Logout Desktop */}
+        <div className="mt-auto px-4 pt-4 border-t border-line dark:border-dark-line">
+          <div className="flex items-center justify-between" data-tour="avatar">
+            <div className="flex items-center gap-3 label-mono min-w-0">
+              <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-petrol text-bg font-serif text-sm tracking-normal overflow-hidden rounded-full">
+                {profile?.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : profile?.nome?.[0]?.toUpperCase() ?? 'Y'}
+              </div>
+              <span className="truncate">{profile?.nome ?? 'Yasmin'}</span>
+            </div>
+            <button onClick={handleLogout} title="Sair da conta" className="text-ink-faint hover:text-terra transition p-1">
+              <LogOut size={16} />
+            </button>
           </div>
-          <span className="truncate">{profile?.nome ?? 'Yasmin'}</span>
         </div>
       </aside>
 
@@ -89,7 +107,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           ) : <div />}
           
           <div className="md:hidden flex items-center gap-3 flex-shrink-0">
-            <Link href="/financeiro" data-tour="financeiro" className={`p-1 transition-colors ${active('/financeiro') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
+            <Link href="/financeiro" className={`p-1 transition-colors ${active('/financeiro') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
               <Wallet size={20} strokeWidth={1.5} />
             </Link>
             <ThemeToggle />
@@ -101,7 +119,6 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
 
       {/* Bottom Bar (Mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
-        
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);
@@ -113,7 +130,6 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           );
         })}
         
-        {/* FAB Central */}
         <div className="flex-1 flex flex-col items-center justify-center min-h-[56px]" data-tour="fab-mobile">
           <button onClick={() => setIsQuickAddOpen(true)} className="w-[36px] h-[36px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform">
             <Plus size={20} strokeWidth={2.5} />
