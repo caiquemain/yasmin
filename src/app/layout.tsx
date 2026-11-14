@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { PwaRegister } from "@/components/PwaRegister";
 import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'next/font/google';
 import './globals.css';
 
@@ -23,7 +24,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${serifLogo.variable} ${mono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <PwaRegister />
+        {children}
+      </body>
     </html>
   );
 }
