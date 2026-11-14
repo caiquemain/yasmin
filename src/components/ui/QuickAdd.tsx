@@ -3,35 +3,22 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { addDays, addWeeks, addMonths, format } from 'date-fns';
 import { X } from 'lucide-react';
+import { enqueueAction } from '@/lib/offline/syncManager';
 
 export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-  
   const [categorias, setCategorias] = useState<any[]>([]);
   const [obras, setObras] = useState<any[]>([]);
 
   const [form, setForm] = useState({
-    tipo: 'tarefa',
-    titulo: '',
-    descricao: '',
-    categoria_id: '',
-    obra_id: '',
-    revisao: '',
-    status: 'a_fazer',
-    prioridade: 'media',
-    data: new Date().toLocaleDateString('sv-SE'),
-    hora_inicio: '',
-    recorrencia: 'none',
+    tipo: 'tarefa', titulo: '', descricao: '', categoria_id: '', obra_id: '', revisao: '',
+    status: 'a_fazer', prioridade: 'media', data: new Date().toLocaleDateString('sv-SE'),
+    hora_inicio: '', recorrencia: 'none',
   });
 
-  // ESC Listener
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && isOpen) onClose(); };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
@@ -51,17 +38,10 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     if (!user) return;
 
     const basePayload = {
-      user_id: user.id,
-      tipo: form.tipo,
-      titulo: form.titulo,
-      descricao: form.descricao || null,
-      categoria_id: form.categoria_id || null,
-      obra_id: form.obra_id || null,
-      revisao: form.revisao || null,
-      status: form.status,
-      prioridade: form.prioridade,
-      hora_inicio: form.hora_inicio || null,
-      recorrencia: form.recorrencia,
+      tipo: form.tipo, titulo: form.titulo, descricao: form.descricao || null,
+      categoria_id: form.categoria_id || null, obra_id: form.obra_id || null,
+      revisao: form.revisao || null, status: form.status, prioridade: form.prioridade,
+      hora_inicio: form.hora_inicio || null, recorrencia: form.recorrencia,
     };
 
     let payloads = [];
@@ -69,7 +49,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     const dataBase = new Date(form.data + 'T12:00:00');
 
     if (form.recorrencia === 'none') {
-      payloads.push({ ...basePayload, data: form.data, parent_id: parentId });
+      payloads.push({ ...basePayload, id: crypto.randomUUID(), data: form.data, parent_id: parentId });
     } else {
       const numOcorrencias = 4;
       for (let i = 0; i < numOcorrencias; i++) {
@@ -77,13 +57,32 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
         if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
         if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
-        payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
+        payloads.push({ ...basePayload, id: crypto.randomUUID(), data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
       }
     }
 
+    // --- AQUI ESTÁ A MÁGICA DO OFFLINE ---
+    if (!navigator.onLine) {
+      // Se estiver offline, joga na fila local
+      payloads.forEach(p => enqueueAction('create_demanda', p));
+      setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
+      onClose();
+      window.location.reload(); 
+      setLoading(false);
+      return;
+    }
+
+    // Se estiver online, tenta enviar direto
     const { error } = await supabase.from('demandas').insert(payloads);
+    
     if (error) {
-      alert('Erro ao salvar: ' + error.message);
+      // Se der erro de rede, salva na fila offline como fallback
+      if (error.message.includes('fetch')) {
+        payloads.forEach(p => enqueueAction('create_demanda', p));
+        alert('Sem conexão. Tarefa salva localmente e será sincronizada.');
+      } else {
+        alert('Erro ao salvar: ' + error.message);
+      }
     } else {
       setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
       onClose();
