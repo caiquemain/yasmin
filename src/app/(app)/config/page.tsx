@@ -16,7 +16,7 @@ export default async function ConfigPage() {
   return (
     <div className="max-w-[800px] px-6 md:px-[52px] py-8 md:py-11">
       <header className="mb-10">
-        <h1 className="font-serif text-3xl text-petrol-deep mb-2">Configurações</h1>
+        <h1 className="font-serif text-3xl text-petrol-deep dark:text-petrol mb-2">Configurações</h1>
         <p className="label-mono">Preferências da conta e gestão</p>
       </header>
 

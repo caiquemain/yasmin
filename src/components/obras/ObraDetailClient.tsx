@@ -103,7 +103,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
       {/* Header */}
       <div className="mb-10">
         <Link href="/obras" className="label-mono text-petrol hover:underline mb-4 inline-block">← Voltar para Obras</Link>
-        <h1 className="font-serif text-4xl text-petrol-deep mb-2">{obra.nome}</h1>
+        <h1 className="font-serif text-4xl text-petrol-deep dark:text-petrol mb-2">{obra.nome}</h1>
         <div className="flex gap-4 label-mono">
           <span>{obra.clientes.nome}</span>
           {obra.area_m2 && <span>{obra.area_m2} m²</span>}
@@ -116,18 +116,18 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
         <div className="space-y-10">
           {/* Checklist */}
           <section>
-            <div className="flex items-end justify-between border-b border-line pb-2 mb-4">
-              <h2 className="font-serif text-2xl text-petrol-deep">Checklist de Cálculo</h2>
+            <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
+              <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Checklist de Cálculo</h2>
               <span className="label-mono">{progresso}% concluído</span>
             </div>
             <ul className="space-y-1">
               {checklist.map((item, i) => (
-                <li key={item.id} className="flex items-center gap-4 py-3 border-b border-dotted border-line last:border-0 group cursor-pointer" onClick={() => toggleChecklist(item.id, item.concluido)}>
-                  <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${item.concluido ? 'bg-petrol border-petrol' : 'border-line-strong group-hover:border-petrol'}`}>
+                <li key={item.id} className="flex items-center gap-4 py-3 border-b border-dotted border-line dark:border-dark-line last:border-0 group cursor-pointer" onClick={() => toggleChecklist(item.id, item.concluido)}>
+                  <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${item.concluido ? 'bg-petrol border-petrol' : 'border-line dark:border-dark-line-strong dark:border-dark-line group-hover:border-petrol'}`}>
                     {item.concluido && <Check size={14} className="text-bg" strokeWidth={3} />}
                   </div>
                   <span className={`text-[14.5px] flex-1 transition-opacity ${item.concluido ? 'opacity-50 line-through' : ''}`}>
-                    <span className="font-mono text-xs text-ink-faint mr-2">0{i+1}</span>
+                    <span className="font-mono text-xs text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft mr-2">0{i+1}</span>
                     {item.titulo}
                   </span>
                 </li>
@@ -137,22 +137,22 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
           {/* Financeiro */}
           <section>
-            <div className="flex items-end justify-between border-b border-line pb-2 mb-4">
-              <h2 className="font-serif text-2xl text-petrol-deep">Financeiro</h2>
+            <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
+              <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Financeiro</h2>
               <button onClick={() => setIsParcelaModalOpen(true)} className="label-mono text-petrol hover:underline">+ Adicionar Parcela</button>
             </div>
             
             {/* Resumo Financeiro */}
-            <div className="grid grid-cols-3 gap-px bg-line border border-line-strong mb-6">
-              <div className="bg-surface p-4">
+            <div className="grid grid-cols-3 gap-px bg-line border border-line dark:border-dark-line-strong dark:border-dark-line mb-6">
+              <div className="bg-surface dark:bg-dark-surface p-4">
                 <span className="label-mono block mb-1">Total</span>
-                <span className="font-serif text-lg text-petrol-deep">{formatBRL(totalGeral)}</span>
+                <span className="font-serif text-lg text-petrol-deep dark:text-petrol">{formatBRL(totalGeral)}</span>
               </div>
-              <div className="bg-surface p-4">
+              <div className="bg-surface dark:bg-dark-surface p-4">
                 <span className="label-mono block mb-1">Recebido</span>
                 <span className="font-serif text-lg text-petrol">{formatBRL(totalPago)}</span>
               </div>
-              <div className="bg-surface p-4">
+              <div className="bg-surface dark:bg-dark-surface p-4">
                 <span className="label-mono block mb-1">A Receber</span>
                 <span className="font-serif text-lg text-terra">{formatBRL(totalPendente)}</span>
               </div>
@@ -160,20 +160,20 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
             {/* Lista de Parcelas */}
             {parcelas.length === 0 ? (
-              <p className="text-sm text-ink-soft italic">Nenhuma parcela cadastrada.</p>
+              <p className="text-sm text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft italic">Nenhuma parcela cadastrada.</p>
             ) : (
               <ul className="space-y-2">
                 {parcelas.map((p) => (
-                  <li key={p.id} className="flex items-center gap-4 p-3 border border-line-strong bg-surface group">
-                    <button onClick={() => toggleParcela(p.id, p.status)} className={`w-5 h-5 border flex flex-shrink-0 items-center justify-center transition-colors ${p.status === 'pago' ? 'bg-petrol border-petrol' : 'border-line-strong group-hover:border-petrol'}`}>
+                  <li key={p.id} className="flex items-center gap-4 p-3 border border-line dark:border-dark-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface group">
+                    <button onClick={() => toggleParcela(p.id, p.status)} className={`w-5 h-5 border flex flex-shrink-0 items-center justify-center transition-colors ${p.status === 'pago' ? 'bg-petrol border-petrol' : 'border-line dark:border-dark-line-strong dark:border-dark-line group-hover:border-petrol'}`}>
                       {p.status === 'pago' && <Check size={14} className="text-bg" strokeWidth={3} />}
                     </button>
                     <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
                       <div>
                         <span className={`text-[14.5px] block ${p.status === 'pago' ? 'opacity-50 line-through' : ''}`}>{p.descricao}</span>
-                        {p.data_prevista && <span className="label-mono text-ink-faint">Previsto: {new Date(p.data_prevista + 'T12:00:00').toLocaleDateString('pt-BR')}</span>}
+                        {p.data_prevista && <span className="label-mono text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft">Previsto: {new Date(p.data_prevista + 'T12:00:00').toLocaleDateString('pt-BR')}</span>}
                       </div>
-                      <span className={`font-mono text-sm ${p.status === 'pago' ? 'text-petrol' : 'text-ink-soft'}`}>
+                      <span className={`font-mono text-sm ${p.status === 'pago' ? 'text-petrol' : 'text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft'}`}>
                         {formatBRL(Number(p.valor))}
                       </span>
                     </div>
@@ -186,19 +186,19 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
         {/* Coluna Direita */}
         <div className="space-y-8">
-          <section className="bg-surface p-6 border border-line-strong sticky top-20">
-            <h2 className="font-serif text-xl text-petrol-deep mb-6">Premissas de Cálculo</h2>
+          <section className="bg-surface dark:bg-dark-surface p-6 border border-line dark:border-dark-line-strong dark:border-dark-line sticky top-20">
+            <h2 className="font-serif text-xl text-petrol-deep dark:text-petrol mb-6">Premissas de Cálculo</h2>
             <div className="space-y-4">
               <div className="space-y-1">
                 <label className="label-mono">fck (MPa)</label>
-                <select value={premissas.fck} onChange={e => setPremissas({...premissas, fck: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-1 text-sm focus:outline-none focus:border-petrol">
+                <select value={premissas.fck} onChange={e => setPremissas({...premissas, fck: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-1 text-sm focus:outline-none focus:border-petrol">
                   <option value="">Não definido</option>
                   {[20,25,30,35,40].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="label-mono">CAA (NBR 6118)</label>
-                <select value={premissas.caa} onChange={e => setPremissas({...premissas, caa: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-1 text-sm focus:outline-none focus:border-petrol">
+                <select value={premissas.caa} onChange={e => setPremissas({...premissas, caa: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-1 text-sm focus:outline-none focus:border-petrol">
                   <option value="">Não definido</option>
                   {['I','II','III','IV'].map(v => <option key={v} value={v}>{v}</option>)}
                 </select>
@@ -206,16 +206,16 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="label-mono">σsolo (kPa)</label>
-                  <input type="number" value={premissas.sigma_solo} onChange={e => setPremissas({...premissas, sigma_solo: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-1 text-sm focus:outline-none focus:border-petrol" />
+                  <input type="number" value={premissas.sigma_solo} onChange={e => setPremissas({...premissas, sigma_solo: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-1 text-sm focus:outline-none focus:border-petrol" />
                 </div>
                 <div className="space-y-1">
                   <label className="label-mono">Cobr. (mm)</label>
-                  <input type="number" value={premissas.cobrimento} onChange={e => setPremissas({...premissas, cobrimento: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-1 text-sm focus:outline-none focus:border-petrol" />
+                  <input type="number" value={premissas.cobrimento} onChange={e => setPremissas({...premissas, cobrimento: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-1 text-sm focus:outline-none focus:border-petrol" />
                 </div>
               </div>
               <div className="space-y-1 pt-2">
                 <label className="label-mono">Outras Notas</label>
-                <textarea value={premissas.outras} onChange={e => setPremissas({...premissas, outras: e.target.value})} className="w-full bg-transparent border border-line-strong p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none" placeholder="Ex: Presença de rocha no solo..." />
+                <textarea value={premissas.outras} onChange={e => setPremissas({...premissas, outras: e.target.value})} className="w-full bg-transparent border border-line dark:border-dark-line-strong dark:border-dark-line p-2 text-sm focus:outline-none focus:border-petrol min-h-[80px] resize-none" placeholder="Ex: Presença de rocha no solo..." />
               </div>
               <button onClick={savePremissas} disabled={loading} className="w-full py-2 mt-2 bg-petrol text-bg text-sm font-medium hover:bg-petrol-deep transition">
                 {loading ? 'Salvando...' : 'Salvar Premissas'}
@@ -229,20 +229,20 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
       {isParcelaModalOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setIsParcelaModalOpen(false)} />
-          <div className="fixed z-50 bg-bg inset-x-0 bottom-0 h-auto border-t border-line-strong p-6 md:inset-y-0 md:right-0 md:left-auto md:w-[400px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right">
-            <h2 className="font-serif text-xl text-petrol-deep mb-6">Nova Parcela</h2>
+          <div className="fixed z-50 bg-bg dark:bg-dark-bg inset-x-0 bottom-0 h-auto border-t border-line dark:border-dark-line-strong dark:border-dark-line p-6 md:inset-y-0 md:right-0 md:left-auto md:w-[400px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right">
+            <h2 className="font-serif text-xl text-petrol-deep dark:text-petrol mb-6">Nova Parcela</h2>
             <form onSubmit={handleCreateParcela} className="space-y-5">
               <div className="space-y-1">
                 <label className="label-mono">Descrição</label>
-                <input required value={formParcela.descricao} onChange={e => setFormParcela({...formParcela, descricao: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-lg focus:outline-none focus:border-petrol" placeholder="Ex: Entrega de formas" />
+                <input required value={formParcela.descricao} onChange={e => setFormParcela({...formParcela, descricao: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol" placeholder="Ex: Entrega de formas" />
               </div>
               <div className="space-y-1">
                 <label className="label-mono">Valor (R$)</label>
-                <input required type="number" step="0.01" value={formParcela.valor} onChange={e => setFormParcela({...formParcela, valor: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-lg focus:outline-none focus:border-petrol" placeholder="0,00" />
+                <input required type="number" step="0.01" value={formParcela.valor} onChange={e => setFormParcela({...formParcela, valor: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol" placeholder="0,00" />
               </div>
               <div className="space-y-1">
                 <label className="label-mono">Data Prevista (Opcional)</label>
-                <input type="date" value={formParcela.data_prevista} onChange={e => setFormParcela({...formParcela, data_prevista: e.target.value})} className="w-full bg-transparent border-b border-line-strong py-2 text-sm focus:outline-none focus:border-petrol" />
+                <input type="date" value={formParcela.data_prevista} onChange={e => setFormParcela({...formParcela, data_prevista: e.target.value})} className="w-full bg-transparent border-b border-line dark:border-dark-line-strong dark:border-dark-line py-2 text-sm focus:outline-none focus:border-petrol" />
               </div>
               <button type="submit" disabled={loadingParcela} className="w-full py-3 mt-4 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
                 {loadingParcela ? 'Salvando...' : 'Adicionar Parcela'}

@@ -36,7 +36,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
       
       {(!obras || obras.length === 0) && !esc ? (
         <section>
-          <h2 className="label-mono border-b border-line pb-2 mb-0 !tracking-[0.14em]">Obras em andamento</h2>
+          <h2 className="label-mono border-b border-line dark:border-dark-line pb-2 mb-0 !tracking-[0.14em]">Obras em andamento</h2>
           <EmptyStateObras />
         </section>
       ) : (

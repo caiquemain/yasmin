@@ -83,9 +83,9 @@ export function AgendaClient() {
     const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
     return (
-      <div className="border border-line-strong bg-surface">
-        <div className="grid grid-cols-7 border-b border-line-strong bg-bg/50">
-          {weekDays.map(d => <div key={d} className="py-2 text-center label-mono text-petrol-deep">{d}</div>)}
+      <div className="border border-line dark:border-dark-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface">
+        <div className="grid grid-cols-7 border-b border-line dark:border-dark-line-strong dark:border-dark-line bg-bg dark:bg-dark-bg/50">
+          {weekDays.map(d => <div key={d} className="py-2 text-center label-mono text-petrol-deep dark:text-petrol">{d}</div>)}
         </div>
         <div className="grid grid-cols-7 auto-rows-fr">
           {days.map((day, i) => {
@@ -97,21 +97,21 @@ export function AgendaClient() {
               <div 
                 key={day.toString()} 
                 onClick={() => { setCurrentDate(day); setView('diaria'); }}
-                className={`min-h-[100px] p-2 border-b border-r border-line cursor-pointer hover:bg-bg transition flex flex-col gap-1
-                  ${!isCurrentMonth ? 'opacity-40 bg-bg/30' : ''}
+                className={`min-h-[100px] p-2 border-b border-r border-line dark:border-dark-line cursor-pointer hover:bg-bg dark:bg-dark-bg dark:hover:bg-dark-bg transition flex flex-col gap-1
+                  ${!isCurrentMonth ? 'opacity-40 bg-bg dark:bg-dark-bg/30' : ''}
                   ${i % 7 === 6 ? 'border-r-0' : ''}
                 `}
               >
-                <span className={`text-sm w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-petrol text-bg font-bold' : 'text-ink'}`}>
+                <span className={`text-sm w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-petrol text-bg font-bold' : 'text-ink dark:text-dark-ink'}`}>
                   {format(day, 'd')}
                 </span>
                 <div className="flex flex-col gap-1 mt-1 overflow-hidden">
                   {dayDemandas.slice(0, 3).map(d => (
-                    <div key={d.id} className="text-[10px] truncate px-1 border-l-2 bg-bg/50" style={{ borderLeftColor: d.categorias?.cor || 'var(--color-petrol)' }}>
+                    <div key={d.id} className="text-[10px] truncate px-1 border-l-2 bg-bg dark:bg-dark-bg/50" style={{ borderLeftColor: d.categorias?.cor || 'var(--color-petrol)' }}>
                       {d.titulo}
                     </div>
                   ))}
-                  {dayDemandas.length > 3 && <span className="text-[10px] text-ink-faint pl-1">+{dayDemandas.length - 3} mais</span>}
+                  {dayDemandas.length > 3 && <span className="text-[10px] text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft pl-1">+{dayDemandas.length - 3} mais</span>}
                 </div>
               </div>
             );
@@ -127,23 +127,23 @@ export function AgendaClient() {
     const days = eachDayOfInterval({ start, end });
 
     return (
-      <div className="flex flex-col md:flex-row gap-px bg-line-strong border border-line-strong">
+      <div className="flex flex-col md:flex-row gap-px bg-line-strong border border-line dark:border-dark-line-strong dark:border-dark-line">
         {days.map(day => {
           const isToday = isSameDay(day, new Date());
           const dayDemandas = demandas.filter(d => d.data === format(day, 'yyyy-MM-dd'));
           
           return (
-            <div key={day.toString()} className="flex-1 bg-surface min-w-[140px] flex flex-col">
-              <div className={`p-3 text-center border-b border-line ${isToday ? 'bg-petrol/10' : 'bg-bg/30'}`}>
-                <div className="label-mono text-petrol-deep">{format(day, 'EEE', { locale: ptBR })}</div>
+            <div key={day.toString()} className="flex-1 bg-surface dark:bg-dark-surface min-w-[140px] flex flex-col">
+              <div className={`p-3 text-center border-b border-line dark:border-dark-line ${isToday ? 'bg-petrol/10' : 'bg-bg dark:bg-dark-bg/30'}`}>
+                <div className="label-mono text-petrol-deep dark:text-petrol">{format(day, 'EEE', { locale: ptBR })}</div>
                 <div className={`font-serif text-xl mt-1 ${isToday ? 'text-petrol font-bold' : ''}`}>{format(day, 'dd')}</div>
               </div>
               <div className="p-2 flex flex-col gap-2 flex-1">
                 {dayDemandas.length === 0 ? (
-                  <span className="text-xs text-ink-faint text-center mt-4 italic">Vazio</span>
+                  <span className="text-xs text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft text-center mt-4 italic">Vazio</span>
                 ) : (
                   dayDemandas.map(d => (
-                    <div key={d.id} className="p-2 border border-line bg-bg/50 text-xs">
+                    <div key={d.id} className="p-2 border border-line dark:border-dark-line bg-bg dark:bg-dark-bg/50 text-xs">
                       {d.hora_inicio && <span className="block font-mono text-[10px] text-petrol mb-1">{d.hora_inicio.slice(0,5)}</span>}
                       <span className="block leading-tight">{d.titulo}</span>
                     </div>
@@ -161,13 +161,13 @@ export function AgendaClient() {
     const dayDemandas = demandas.filter(d => d.data === format(currentDate, 'yyyy-MM-dd'));
 
     return (
-      <div className="bg-surface border border-line-strong p-6 min-h-[400px]">
-        <h2 className="font-serif text-2xl text-petrol-deep mb-6 border-b border-line pb-2">
+      <div className="bg-surface dark:bg-dark-surface border border-line dark:border-dark-line-strong dark:border-dark-line p-6 min-h-[400px]">
+        <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6 border-b border-line dark:border-dark-line pb-2">
           {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
         </h2>
         
         {dayDemandas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-ink-faint">
+          <div className="flex flex-col items-center justify-center py-20 text-ink dark:text-dark-ink-faint dark:text-dark-inkSoft">
             <p className="label-mono">nada agendado.</p>
           </div>
         ) : (
@@ -182,7 +182,7 @@ export function AgendaClient() {
                   <h3 className="text-[15px] font-medium leading-tight">{d.titulo}</h3>
                   <div className="flex gap-2 mt-1">
                     {d.categorias && <span className="label-mono text-petrol">{d.categorias.nome}</span>}
-                    {d.obras && <span className="label-mono text-ink-soft">• {d.obras.nome}</span>}
+                    {d.obras && <span className="label-mono text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft">• {d.obras.nome}</span>}
                     {d.revisao && <span className="label-mono text-terra">• {d.revisao}</span>}
                   </div>
                 </div>
@@ -198,12 +198,12 @@ export function AgendaClient() {
     <div>
       {/* Controles do Topo */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex gap-2 p-1 bg-surface border border-line-strong w-fit">
+        <div className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line dark:border-dark-line-strong dark:border-dark-line w-fit">
           {(['mensal', 'semanal', 'diaria'] as ViewMode[]).map(v => (
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink-soft hover:bg-line/50'}`}
+              className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft hover:bg-line/50'}`}
             >
               {v}
             </button>
@@ -211,8 +211,8 @@ export function AgendaClient() {
         </div>
 
         <div className="flex items-center gap-4">
-          <button onClick={goToday} className="label-mono border border-line-strong px-3 py-1 hover:bg-surface transition">Hoje</button>
-          <div className="flex items-center border border-line-strong bg-surface">
+          <button onClick={goToday} className="label-mono border border-line dark:border-dark-line-strong dark:border-dark-line px-3 py-1 hover:bg-surface dark:bg-dark-surface transition">Hoje</button>
+          <div className="flex items-center border border-line dark:border-dark-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface">
             <button onClick={prev} className="px-3 py-1 hover:bg-line/30 transition">←</button>
             <span className="font-serif text-lg w-48 text-center capitalize">{getHeaderTitle()}</span>
             <button onClick={next} className="px-3 py-1 hover:bg-line/30 transition">→</button>

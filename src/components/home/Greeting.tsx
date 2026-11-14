@@ -12,7 +12,7 @@ export function Greeting({ nome }: { nome: string }) {
 
   return (
     <header className="mb-8">
-      <h1 className="font-serif text-4xl md:text-5xl text-petrol-deep leading-none tracking-tight">{saudacao}, {nome}</h1>
+      <h1 className="font-serif text-4xl md:text-5xl text-petrol-deep dark:text-petrol leading-none tracking-tight">{saudacao}, {nome}</h1>
       <p className="label-mono mt-3 !tracking-[0.12em]">{data}</p>
     </header>
   );

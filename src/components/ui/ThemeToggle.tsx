@@ -25,7 +25,7 @@ export function ThemeToggle() {
   };
 
   return (
-    <button onClick={toggleTheme} className="p-2 text-ink-soft hover:text-petrol transition-colors" title="Alternar tema">
+    <button onClick={toggleTheme} className="p-2 text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft hover:text-petrol transition-colors" title="Alternar tema">
       {isDark ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
     </button>
   );

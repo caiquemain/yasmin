@@ -24,7 +24,7 @@ export default async function PendenciasPage() {
   return (
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
       <header className="mb-8">
-        <h1 className="font-serif text-3xl text-petrol-deep mb-2">Pendências</h1>
+        <h1 className="font-serif text-3xl text-petrol-deep dark:text-petrol mb-2">Pendências</h1>
         <p className="label-mono">O que está travado esperando terceiros</p>
       </header>
 

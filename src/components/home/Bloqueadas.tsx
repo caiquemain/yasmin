@@ -8,7 +8,7 @@ export function Bloqueadas({ items }: { items: any[] }) {
       <ul>
         {items.map((b) => (
           <li key={b.id} className="py-2.5 border-b border-dotted border-[#E0C8B0] last:border-0 last:pb-0 text-[14.5px]">
-            {b.titulo}{b.obras?.nome && <span className="text-ink-soft"> — {b.obras.nome}</span>}
+            {b.titulo}{b.obras?.nome && <span className="text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft"> — {b.obras.nome}</span>}
             <span className="block label-mono mt-1">há {dias(b.created_at)} dias</span>
           </li>
         ))}
