@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { EscritorioFilter } from './EscritorioFilter';
 import { QuickAdd } from '../ui/QuickAdd';
+import { SearchModal } from '../ui/SearchModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useState } from 'react';
 import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet } from 'lucide-react';
@@ -29,6 +30,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-60 bg-surface dark:bg-dark-surface border-r border-line-strong dark:border-dark-line flex-col py-6 shrink-0 transition-colors">
         <div className="flex items-center justify-between px-6 pb-5 border-b border-line dark:border-dark-line mb-4">
+          <button onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))} className="hidden md:flex items-center gap-2 px-2 py-1 bg-bg dark:bg-dark-bg border border-line-strong dark:border-dark-line text-ink-soft dark:text-dark-inkSoft hover:text-petrol transition rounded-sm text-xs w-full max-w-[120px] ml-2"><Search size={12} /> <span className="flex-1 text-left">Buscar...</span> <kbd className="text-[10px] font-mono opacity-50">⌘K</kbd></button>
           <div className="font-logo text-2xl text-petrol-deep dark:text-petrol">Yasmin<span className="text-terra dark:text-terra">.</span></div>
           <ThemeToggle />
         </div>
@@ -108,6 +110,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         <Plus size={24} strokeWidth={2} />
       </button>
 
+      <SearchModal />
       <QuickAdd isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} />
     </div>
   );
