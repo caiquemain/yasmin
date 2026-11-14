@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script } from 'next/font/google';
+import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'next/font/google';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
 const serif = Dancing_Script({ subsets:['latin'], weight:['400','500','600','700'], variable:'--font-plex-serif' });
+const serifLogo = IBM_Plex_Serif({ subsets:['latin'], weight:['500','600'], variable:'--font-plex-serif-logo' });
 const mono  = IBM_Plex_Mono({  subsets:['latin'], weight:['400','500'], variable:'--font-plex-mono' });
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${mono.variable}`}>
+    <html lang="pt-BR" className={`${sans.variable} ${serif.variable} ${serifLogo.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );

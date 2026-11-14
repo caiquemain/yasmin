@@ -23,10 +23,10 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex bg-bg">
       <aside className="hidden lg:flex w-[42%] bg-petrol-deep text-bg p-16 flex-col justify-between">
-        <div className="font-serif text-4xl">Yasmin<span className="text-terra">.</span></div>
+        <div className="font-logo text-4xl">Yasmin<span className="text-terra">.</span></div>
         <div>
           <p className="label-mono !text-petrol-soft mb-4">Organização pessoal · gestão de obras</p>
-          <h1 className="font-serif text-4xl leading-tight">Um caderno técnico<br />para o seu dia.</h1>
+          <h1 className="font-logo text-4xl leading-tight">Um caderno técnico<br />para o seu dia.</h1>
           <p className="mt-6 text-sm text-bg/70 max-w-sm">Tarefas, agenda e o prontuário de cada obra — num só lugar.</p>
         </div>
         <p className="label-mono !text-bg/40">© Yasmin · 2026</p>
@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       <main className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden font-serif text-3xl text-petrol-deep mb-8">Yasmin<span className="text-terra">.</span></div>
+          <div className="lg:hidden font-logo text-3xl text-petrol-deep mb-8">Yasmin<span className="text-terra">.</span></div>
           <h2 className="font-serif text-2xl text-petrol-deep mb-1">Entrar</h2>
           <p className="text-sm text-ink-soft mb-8">Sem senha. Google ou link no email.</p>
 

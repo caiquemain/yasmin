@@ -24,7 +24,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
     <div className="min-h-screen flex bg-bg text-ink">
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-60 bg-surface border-r border-line-strong flex-col py-6 shrink-0">
-        <div className="font-serif text-2xl text-petrol-deep px-6 pb-5 border-b border-line mb-4">Yasmin<span className="text-terra">.</span></div>
+        <div className="font-logo text-2xl text-petrol-deep px-6 pb-5 border-b border-line mb-4">Yasmin<span className="text-terra">.</span></div>
         <nav className="flex flex-col">
           {items.map((it) => (
             <Link key={it.href} href={it.href} className={`flex justify-between items-center px-6 py-2.5 text-sm border-l-2 transition ${active(it.href) ? 'border-petrol bg-petrol/[0.04] text-petrol-deep font-medium' : 'border-transparent text-ink-soft hover:text-ink'}`}>
