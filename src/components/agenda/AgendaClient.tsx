@@ -8,6 +8,7 @@ import {
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';
+import { PageTour } from '@/components/ui/PageTour';
 
 type ViewMode = 'mensal' | 'semanal' | 'diaria';
 
@@ -216,7 +217,7 @@ export function AgendaClient() {
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line w-fit">
+        <div data-tour="agenda-views" className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line w-fit">
           {(['mensal', 'semanal', 'diaria'] as ViewMode[]).map(v => (
             <button
               key={v}
@@ -238,7 +239,7 @@ export function AgendaClient() {
         </div>
       </div>
 
-      <div className={loading ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
+      <div data-tour="agenda-grid" className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
         {view === 'mensal' && renderMensal()}
         {view === 'semanal' && renderSemanal()}
         {view === 'diaria' && renderDiaria()}
