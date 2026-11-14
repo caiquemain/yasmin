@@ -8,11 +8,11 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 import { useState } from 'react';
 import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search } from 'lucide-react';
 
+// Item Config volta para o lugar certo no mobile
 const items = [
   { href: '/', label: 'Início', icon: Home },
   { href: '/agenda', label: 'Agenda', icon: CalendarDays },
   { href: '/obras', label: 'Obras', icon: Building2 },
-  { href: '/financeiro', label: 'Financeiro', icon: Wallet },
   { href: '/config', label: 'Config', icon: Settings },
 ];
 
@@ -57,6 +57,10 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
               </Link>
             );
           })}
+          <Link href="/financeiro" className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-sm transition ${active('/financeiro') ? 'bg-petrol/10 text-petrol-deep dark:text-petrol font-medium' : 'text-ink-soft dark:text-dark-inkSoft hover:text-ink dark:hover:text-dark-ink'}`}>
+            <Wallet size={18} strokeWidth={1.5} />
+            <span>Financeiro</span>
+          </Link>
           <Link href="/pendencias" className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-sm transition ${active('/pendencias') ? 'bg-petrol/10 text-petrol-deep dark:text-petrol font-medium' : 'text-ink-soft dark:text-dark-inkSoft hover:text-ink dark:hover:text-dark-ink'}`}>
             <AlertCircle size={18} strokeWidth={1.5} />
             <span className="flex-1">Pendências</span>
@@ -86,14 +90,22 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
               <EscritorioFilter escritorios={escritorios} atual={escAtual} />
             </div>
           ) : <div />}
-          <div className="md:hidden"><ThemeToggle /></div>
+          
+          {/* Ações no Header Mobile (Financeiro e Tema) */}
+          <div className="md:hidden flex items-center gap-2">
+            <Link href="/financeiro" className={`p-2 transition-colors ${active('/financeiro') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
+              <Wallet size={20} strokeWidth={1.5} />
+            </Link>
+            <ThemeToggle />
+          </div>
         </div>
 
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) */}
+      {/* Bottom Bar (Mobile) - Agora com Config */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
+        
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
           const isActive = active(it.href);
