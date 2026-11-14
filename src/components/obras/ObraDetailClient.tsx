@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useEscape } from '@/hooks/useEscape';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Check, Plus, X, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
@@ -13,21 +12,26 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
   
   const [parcelas, setParcelas] = useState(initialParcelas);
   const [isParcelaModalOpen, setIsParcelaModalOpen] = useState(false);
-  
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') { setIsParcelaModalOpen(false); setIsArtModalOpen(false); } };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
   const [formParcela, setFormParcela] = useState({ descricao: '', valor: '', data_prevista: '' });
   
   const [loading, setLoading] = useState(false);
-  useEscape(() => { setIsParcelaModalOpen(false); setIsArtModalOpen(false); }, isParcelaModalOpen || isArtModalOpen);
   const [loadingParcela, setLoadingParcela] = useState(false);
 
   const [isArtModalOpen, setIsArtModalOpen] = useState(false);
   const [artNumero, setArtNumero] = useState(obra.art_numero || '');
   const [artStatus, setArtStatus] = useState(obra.art_status || 'nao_emitida');
+
+  // ESC Handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsParcelaModalOpen(false);
+        setIsArtModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const [premissas, setPremissas] = useState({
     fck: obra.premissa_fck || '',
@@ -37,15 +41,9 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
     outras: obra.premissa_outras || '',
   });
 
-  // ===== LÓGICA DO CHECKLIST (ORDENAÇÃO E EXCLUSÃO) =====
-
-  // Função auxiliar para salvar a nova ordem no banco e na tela
   const syncChecklistOrder = async (newList: any[]) => {
-    // Reordena os itens (1, 2, 3...)
     const updatedList = newList.map((item, idx) => ({ ...item, ordem: idx + 1 }));
     setChecklist(updatedList);
-
-    // Salva no banco em paralelo
     const promises = updatedList.map(item => 
       supabase.from('obra_checklist').update({ ordem: item.ordem }).eq('id', item.id)
     );
@@ -82,10 +80,9 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
   const deleteChecklistItem = async (id: string) => {
     if (!confirm('Excluir esta etapa do checklist?')) return;
-    
     const newList = checklist.filter(c => c.id !== id);
-    await syncChecklistOrder(newList); // Reordena o resto
-    await supabase.from('obra_checklist').delete().eq('id', id); // Deleta do banco
+    await syncChecklistOrder(newList);
+    await supabase.from('obra_checklist').delete().eq('id', id);
   };
 
   const moveChecklistItem = async (index: number, direction: 'up' | 'down') => {
@@ -94,14 +91,9 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
     const newList = [...checklist];
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    
-    // Troca as posições no array
     [newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]];
-    
     await syncChecklistOrder(newList);
   };
-
-  // ===== OUTRAS FUNÇÕES =====
 
   const toggleParcela = async (id: string, statusAtual: string) => {
     const isPago = statusAtual === 'pago';
@@ -182,9 +174,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
-        {/* Coluna Esquerda */}
         <div className="space-y-10">
-          {/* Checklist */}
           <section>
             <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
               <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Checklist de Cálculo</h2>
@@ -194,7 +184,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
             <ul className="space-y-1 mb-4">
               {checklist.map((item, i) => (
                 <li key={item.id} className="flex items-center gap-3 py-2 border-b border-dotted border-line dark:border-dark-line last:border-0 group">
-                  {/* Checkbox */}
                   <div 
                     onClick={() => toggleChecklist(item.id, item.concluido)}
                     className={`w-5 h-5 flex-shrink-0 border cursor-pointer flex items-center justify-center transition-colors ${item.concluido ? 'bg-petrol border-petrol' : 'border-line-strong dark:border-dark-line hover:border-petrol'}`}
@@ -202,7 +191,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
                     {item.concluido && <Check size={14} className="text-bg" strokeWidth={3} />}
                   </div>
                   
-                  {/* Título */}
                   <span 
                     onClick={() => toggleChecklist(item.id, item.concluido)}
                     className={`text-[14.5px] flex-1 cursor-pointer transition-opacity ${item.concluido ? 'opacity-50 line-through' : 'text-ink dark:text-dark-ink'}`}
@@ -211,7 +199,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
                     {item.titulo}
                   </span>
 
-                  {/* Ações (Só aparecem no hover) */}
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button onClick={(e) => { e.stopPropagation(); moveChecklistItem(i, 'up'); }} disabled={i === 0} className="p-1 text-ink-faint hover:text-petrol disabled:opacity-30">
                       <ChevronUp size={16} />
@@ -233,7 +220,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
             </form>
           </section>
 
-          {/* Financeiro */}
           <section>
             <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
               <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Financeiro</h2>
@@ -274,7 +260,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
           </section>
         </div>
 
-        {/* Coluna Direita */}
         <div className="space-y-8">
           <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line sticky top-20">
             <h2 className="font-serif text-xl text-petrol-deep dark:text-petrol mb-6">Premissas de Cálculo</h2>
@@ -325,7 +310,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
         </div>
       </div>
 
-      {/* Modal Nova Parcela */}
       {isParcelaModalOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setIsParcelaModalOpen(false)} />
@@ -353,7 +337,6 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
         </>
       )}
 
-      {/* Modal ART */}
       {isArtModalOpen && (
         <>
           <div className="fixed inset-0 bg-black/30 z-50" onClick={() => setIsArtModalOpen(false)} />

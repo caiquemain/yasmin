@@ -6,7 +6,7 @@ import { QuickAdd } from '../ui/QuickAdd';
 import { SearchModal } from '../ui/SearchModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { useState } from 'react';
-import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet } from 'lucide-react';
+import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search } from 'lucide-react';
 
 const items = [
   { href: '/', label: 'Início', icon: Home },
@@ -30,9 +30,21 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
       {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-60 bg-surface dark:bg-dark-surface border-r border-line-strong dark:border-dark-line flex-col py-6 shrink-0 transition-colors">
         <div className="flex items-center justify-between px-6 pb-5 border-b border-line dark:border-dark-line mb-4">
-          <button onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))} className="hidden md:flex items-center gap-2 px-2 py-1 bg-bg dark:bg-dark-bg border border-line-strong dark:border-dark-line text-ink-soft dark:text-dark-inkSoft hover:text-petrol transition rounded-sm text-xs w-full max-w-[120px] ml-2"><Search size={12} /> <span className="flex-1 text-left">Buscar...</span> <kbd className="text-[10px] font-mono opacity-50">⌘K</kbd></button>
           <div className="font-logo text-2xl text-petrol-deep dark:text-petrol">Yasmin<span className="text-terra dark:text-terra">.</span></div>
           <ThemeToggle />
+        </div>
+
+        <div className="px-4 mb-4">
+          <button 
+            onClick={() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "k", ctrlKey: true }))} 
+            className="w-full flex items-center justify-between px-3 py-2 bg-bg dark:bg-dark-bg border border-line-strong dark:border-dark-line text-ink-soft dark:text-dark-inkSoft hover:border-petrol transition rounded-sm text-xs"
+          >
+            <div className="flex items-center gap-2">
+              <Search size={14} />
+              <span>Buscar...</span>
+            </div>
+            <kbd className="font-mono text-[10px] opacity-50">⌘K</kbd>
+          </button>
         </div>
         
         <nav className="flex flex-col gap-1 px-3">
@@ -73,7 +85,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) - 5 Abas + FAB */}
+      {/* Bottom Bar (Mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-1 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
@@ -86,7 +98,6 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
           );
         })}
         
-        {/* FAB Central Mobile */}
         <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
           <button onClick={() => setIsQuickAddOpen(true)} className="absolute -top-5 w-14 h-14 bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center shadow-lg active:scale-95 transition-transform">
             <Plus size={24} strokeWidth={2} />
