@@ -24,7 +24,6 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
     window.location.reload();
   };
 
-  // Função para fazer o upload da foto
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploadingAvatar(true);
@@ -34,24 +33,11 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
       const fileExt = file.name.split('.').pop();
       const filePath = `${userId}/${Math.random()}.${fileExt}`;
 
-      // Faz upload para o bucket 'avatars'
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file);
-
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
       if (uploadError) throw uploadError;
 
-      // Pega a URL pública
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-
-      // Salva a URL no perfil
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
-        .eq('id', userId);
-
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
       if (updateError) throw updateError;
 
       setAvatarUrl(publicUrl);
@@ -103,20 +89,15 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
     : '';
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8 w-full max-w-full overflow-hidden">
       {/* Perfil */}
-      <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line">
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6">Perfil</h2>
         
-        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center mb-6">
-          {/* Avatar Upload */}
-          <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+        <div className="flex flex-col md:flex-row gap-6 items-start md:items-center w-full">
+          <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileInputRef.current?.click()}>
             <div className="w-20 h-20 rounded-full bg-petrol text-bg flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-petrol transition">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="font-serif text-3xl">{nome?.[0]?.toUpperCase() ?? 'Y'}</span>
-              )}
+              {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <span className="font-serif text-3xl">{nome?.[0]?.toUpperCase() ?? 'Y'}</span>}
             </div>
             <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
               {uploadingAvatar ? <Loader2 className="text-white animate-spin" size={20} /> : <Camera className="text-white" size={20} />}
@@ -124,71 +105,76 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleAvatarUpload} disabled={uploadingAvatar} />
           </div>
 
-          <div className="flex-1 w-full space-y-1">
-            <label className="label-mono">Como você quer ser chamada?</label>
-            <div className="flex gap-4 items-end">
-              <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="flex-1 bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
-              <button onClick={savePerfil} disabled={loadingPerfil} className="px-6 py-2 bg-petrol-deep text-bg label-mono hover:bg-petrol transition">{loadingPerfil ? 'Salvando...' : 'Salvar'}</button>
+          <div className="flex-1 w-full space-y-3">
+            <label className="label-mono block">Como você quer ser chamada?</label>
+            <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
+              <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
+              <button onClick={savePerfil} disabled={loadingPerfil} className="w-full md:w-auto px-6 py-2 bg-petrol-deep text-bg label-mono hover:bg-petrol transition flex-shrink-0">
+                {loadingPerfil ? 'Salvando...' : 'Salvar'}
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       {/* Escritórios */}
-      <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line">
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Escritórios</h2>
         <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Onde você presta serviço como calculista.</p>
-        <ul className="space-y-2 mb-6">
+        <ul className="space-y-2 mb-6 w-full">
           {escritorios.map((e: any) => (
-            <li key={e.id} className="flex justify-between items-center py-2 border-b border-dotted border-line dark:border-dark-line last:border-0 text-ink dark:text-dark-ink">
-              <span className="font-medium">{e.nome}</span>
-              <button onClick={() => archiveEscritorio(e.id)} className="label-mono text-terra hover:underline">Arquivar</button>
+            <li key={e.id} className="flex flex-wrap justify-between items-center py-2 border-b border-dotted border-line dark:border-dark-line last:border-0 text-ink dark:text-dark-ink gap-2">
+              <span className="font-medium truncate max-w-[70%]">{e.nome}</span>
+              <button onClick={() => archiveEscritorio(e.id)} className="label-mono text-terra hover:underline text-xs">Arquivar</button>
             </li>
           ))}
         </ul>
-        <form onSubmit={addEscritorio} className="flex gap-4 items-end">
-          <div className="flex-1 space-y-1">
+        <form onSubmit={addEscritorio} className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
+          <div className="flex-1 space-y-1 w-full">
             <label className="label-mono">Novo escritório</label>
-            <input type="text" value={novoEscritorio} onChange={e => setNovoEscritorio(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Escritório de Arquitetura Silva" />
+            <input type="text" value={novoEscritorio} onChange={e => setNovoEscritorio(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Escritório de Arquitetura" />
           </div>
-          <button type="submit" className="px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink">Adicionar</button>
+          <button type="submit" className="w-full md:w-auto px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink flex-shrink-0">Adicionar</button>
         </form>
       </section>
 
       {/* Categorias */}
-      <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line">
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Categorias</h2>
-        <ul className="grid grid-cols-2 gap-2 mb-6">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 w-full">
           {categorias.map((c: any) => (
             <li key={c.id} className="flex justify-between items-center py-2 border-b border-dotted border-line dark:border-dark-line">
-              <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full" style={{ backgroundColor: c.cor }} /><span className="text-sm text-ink dark:text-dark-ink">{c.nome}</span></div>
-              <button onClick={() => deleteCategoria(c.id)} className="text-xs text-ink-faint dark:text-dark-inkSoft hover:text-terra transition">excluir</button>
+              <div className="flex items-center gap-2 truncate pr-2">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.cor }} />
+                <span className="text-sm text-ink dark:text-dark-ink truncate">{c.nome}</span>
+              </div>
+              <button onClick={() => deleteCategoria(c.id)} className="text-xs text-ink-faint dark:text-dark-inkSoft hover:text-terra transition flex-shrink-0">excluir</button>
             </li>
           ))}
         </ul>
-        <form onSubmit={addCategoria} className="flex gap-4 items-end">
-          <div className="flex-1 space-y-1">
+        <form onSubmit={addCategoria} className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
+          <div className="flex-1 space-y-1 w-full">
             <label className="label-mono">Nova categoria</label>
             <input type="text" value={novaCategoria} onChange={e => setNovaCategoria(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-sm text-ink dark:text-dark-ink focus:outline-none focus:border-petrol placeholder:text-ink-faint dark:placeholder:text-dark-inkSoft" placeholder="Ex: Reuniões" />
           </div>
-          <button type="submit" className="px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink">Adicionar</button>
+          <button type="submit" className="w-full md:w-auto px-4 py-2 border border-line-strong dark:border-dark-line label-mono hover:bg-bg dark:hover:bg-dark-bg transition text-ink dark:text-dark-ink flex-shrink-0">Adicionar</button>
         </form>
       </section>
 
       {/* Sincronizar Agenda */}
-      <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line">
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Sincronizar Agenda</h2>
         <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Adicione o link abaixo no seu Google Agenda (Outros calendários &gt; De URL).</p>
-        <div className="flex gap-2">
-          <input readOnly value={urlICS} className="flex-1 bg-bg dark:bg-dark-bg border border-line-strong dark:border-dark-line p-2 text-xs font-mono text-ink-soft dark:text-dark-inkSoft focus:outline-none" />
-          <button onClick={() => { navigator.clipboard.writeText(urlICS); alert('Link seguro copiado!'); }} className="px-4 py-2 bg-petrol text-bg label-mono hover:bg-petrol-deep transition">Copiar</button>
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+          <input readOnly value={urlICS} className="flex-1 min-w-0 bg-bg dark:bg-dark-bg border border-line-strong dark:border-dark-line p-2 text-xs font-mono text-ink-soft dark:text-dark-inkSoft focus:outline-none" />
+          <button onClick={() => { navigator.clipboard.writeText(urlICS); alert('Link seguro copiado!'); }} className="w-full md:w-auto px-4 py-2 bg-petrol text-bg label-mono hover:bg-petrol-deep transition flex-shrink-0">Copiar</button>
         </div>
       </section>
 
       {/* Dados */}
-      <section className="bg-surface dark:bg-dark-surface p-6 border border-line-strong dark:border-dark-line">
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Dados</h2>
-        <button onClick={exportarDados} disabled={exportando} className="mt-4 px-6 py-2 bg-petrol text-bg label-mono hover:bg-petrol-deep transition">{exportando ? 'Gerando...' : 'Baixar Backup (JSON)'}</button>
+        <button onClick={exportarDados} disabled={exportando} className="w-full md:w-auto mt-4 px-6 py-2 bg-petrol text-bg label-mono hover:bg-petrol-deep transition">{exportando ? 'Gerando...' : 'Baixar Backup (JSON)'}</button>
       </section>
     </div>
   );
