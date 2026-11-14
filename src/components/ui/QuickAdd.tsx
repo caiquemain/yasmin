@@ -34,68 +34,92 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+
+    // Validação manual (o botão está fora do <form>)
+    if (!form.titulo.trim()) {
+      alert('Por favor, preencha o título.');
+      return;
+    }
+
     setLoading(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
-
-    const basePayload = {
-      tipo: form.tipo, titulo: form.titulo, descricao: form.descricao || null,
-      categoria_id: form.categoria_id || null, obra_id: form.obra_id || null,
-      revisao: form.revisao || null, status: form.status, prioridade: form.prioridade,
-      hora_inicio: form.hora_inicio || null, recorrencia: form.recorrencia,
-    };
-
-    let payloads = [];
-    const parentId = crypto.randomUUID();
-    const dataBase = new Date(form.data + 'T12:00:00');
-
-    if (form.recorrencia === 'none') {
-      payloads.push({ ...basePayload, id: crypto.randomUUID(), data: form.data, parent_id: parentId });
-    } else {
-      const numOcorrencias = 4;
-      for (let i = 0; i < numOcorrencias; i++) {
-        let novaData = dataBase;
-        if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
-        if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
-        if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
-        payloads.push({ ...basePayload, id: crypto.randomUUID(), data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
-      }
-    }
-
-    // OFFLINE: salva na fila e fecha o modal sem recarregar
-    if (!navigator.onLine) {
-      payloads.forEach(p => enqueueAction('create_demanda', p));
-      setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
-      setSavedOffline(true);
-      setLoading(false);
-      // Fecha o modal após 1.5s para a pessoa ver a mensagem
-      setTimeout(() => { onClose(); }, 1500);
-      return;
-    }
-
-    // ONLINE: envia direto
-    const { error } = await supabase.from('demandas').insert(payloads);
-    
-    if (error) {
-      if (error.message.includes('fetch') || error.message.includes('network')) {
-        payloads.forEach(p => enqueueAction('create_demanda', p));
-        setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
-        setSavedOffline(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('Sessão expirada. Faça login novamente.');
         setLoading(false);
-        setTimeout(() => { onClose(); }, 1500);
         return;
       }
-      alert('Erro ao salvar: ' + error.message);
-      setLoading(false);
-      return;
-    }
 
-    // Sucesso online
-    setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
-    onClose();
-    // Recarrega só se estiver online e der certo
-    window.location.reload();
+      // ✅ CORREÇÃO: user_id incluído no payload
+      const basePayload = {
+        user_id: user.id,
+        tipo: form.tipo,
+        titulo: form.titulo,
+        descricao: form.descricao || null,
+        categoria_id: form.categoria_id || null,
+        obra_id: form.obra_id || null,
+        revisao: form.revisao || null,
+        status: form.status,
+        prioridade: form.prioridade,
+        hora_inicio: form.hora_inicio || null,
+        recorrencia: form.recorrencia,
+      };
+
+      const dataBase = new Date(form.data + 'T12:00:00');
+      const parentId = crypto.randomUUID();
+      const payloads: any[] = [];
+
+      if (form.recorrencia === 'none') {
+        payloads.push({ ...basePayload, data: form.data, parent_id: parentId });
+      } else {
+        const numOcorrencias = 4;
+        for (let i = 0; i < numOcorrencias; i++) {
+          let novaData = dataBase;
+          if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
+          if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
+          if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
+          payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
+        }
+      }
+
+      // OFFLINE
+      if (!navigator.onLine) {
+        payloads.forEach(p => enqueueAction('create_demanda', p));
+        setSavedOffline(true);
+        setLoading(false);
+        setTimeout(() => onClose(), 1500);
+        return;
+      }
+
+      // ONLINE
+      const { error } = await supabase.from('demandas').insert(payloads);
+
+      if (error) {
+        // Fallback offline se for erro de rede
+        if (error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
+          payloads.forEach(p => enqueueAction('create_demanda', p));
+          setSavedOffline(true);
+          setLoading(false);
+          setTimeout(() => onClose(), 1500);
+          return;
+        }
+        // Mostra o erro real (RLS, constraint, etc)
+        alert('Erro ao salvar: ' + error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Sucesso
+      setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
+      onClose();
+      window.location.reload();
+
+    } catch (err: any) {
+      alert('Erro inesperado: ' + (err?.message || 'Tente novamente'));
+      setLoading(false);
+    }
   };
 
   if (!isOpen) return null;
