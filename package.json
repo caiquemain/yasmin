@@ -19,6 +19,7 @@
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "react-joyride": "^3.2.0",
     "recharts": "^3.10.1",
     "web-push": "^4.0.0"
   },
@@ -27,6 +28,7 @@
     "@types/node": "^20.19.43",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/react-joyride": "^2.0.2",
     "@types/web-push": "^3.6.4",
     "autoprefixer": "^10.6.2",
     "eslint": "^9",
