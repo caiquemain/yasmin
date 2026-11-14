@@ -42,7 +42,7 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 pb-20 md:pb-0">
+      <main className="flex-1 min-w-0 pb-24 md:pb-0">
         {escritorios.length > 0 && (
           <div className="border-b border-line bg-bg/60 backdrop-blur-sm sticky top-0 z-30">
             <div className="max-w-[1000px] px-6 md:px-[52px] py-2 flex items-center gap-4">
@@ -54,20 +54,20 @@ export function Shell({ profile, escritorios, children, badges = {} }: any) {
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) - 4 Abas + FAB */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface border-t border-line-strong flex items-end justify-between px-2 z-40 pb-safe pt-1 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <Link href="/" className={`flex-1 flex flex-col items-center py-2 label-mono ${active('/') ? 'text-petrol-deep' : ''}`}>Início</Link>
-        <Link href="/agenda" className={`flex-1 flex flex-col items-center py-2 label-mono ${active('/agenda') ? 'text-petrol-deep' : ''}`}>Agenda</Link>
+      {/* Bottom Bar (Mobile) - Melhorada para Z Fold e Safe Area */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface border-t border-line-strong flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <Link href="/" className={`flex-1 flex flex-col items-center justify-center min-h-[56px] label-mono ${active('/') ? 'text-petrol-deep' : ''}`}>Início</Link>
+        <Link href="/agenda" className={`flex-1 flex flex-col items-center justify-center min-h-[56px] label-mono ${active('/agenda') ? 'text-petrol-deep' : ''}`}>Agenda</Link>
         
-        {/* FAB Central */}
-        <div className="relative flex-1 flex justify-center -top-4">
-          <button onClick={() => setIsQuickAddOpen(true)} className="w-14 h-14 bg-petrol-deep text-bg flex items-center justify-center rounded-none shadow-lg active:scale-95 transition-transform">
+        {/* FAB Central ajustado */}
+        <div className="relative w-16 h-16 flex items-center justify-center flex-shrink-0">
+          <button onClick={() => setIsQuickAddOpen(true)} className="absolute -top-5 w-14 h-14 bg-petrol-deep text-bg flex items-center justify-center shadow-lg active:scale-95 transition-transform">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
 
-        <Link href="/obras" className={`flex-1 flex flex-col items-center py-2 label-mono ${active('/obras') ? 'text-petrol-deep' : ''}`}>Obras</Link>
-        <Link href="/config" className={`flex-1 flex flex-col items-center py-2 label-mono ${active('/config') ? 'text-petrol-deep' : ''}`}>Config</Link>
+        <Link href="/obras" className={`flex-1 flex flex-col items-center justify-center min-h-[56px] label-mono ${active('/obras') ? 'text-petrol-deep' : ''}`}>Obras</Link>
+        <Link href="/config" className={`flex-1 flex flex-col items-center justify-center min-h-[56px] label-mono ${active('/config') ? 'text-petrol-deep' : ''}`}>Config</Link>
       </nav>
 
       {/* FAB Desktop */}

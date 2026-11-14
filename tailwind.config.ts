@@ -16,13 +16,16 @@ export default {
       },
       fontFamily: {
         sans:  ['var(--font-plex-sans)',  'system-ui', 'sans-serif'],
-        serif: ['var(--font-plex-serif)', 'Georgia',   'serif'], // Cursiva
-        logo:  ['var(--font-plex-serif-logo)', 'Georgia', 'serif'], // Serifada original
+        serif: ['var(--font-plex-serif)', 'Georgia',   'serif'],
+        logo:  ['var(--font-plex-serif-logo)', 'Georgia', 'serif'],
         mono:  ['var(--font-plex-mono)',  'ui-monospace', 'monospace'],
       },
       fontSize: {
         '2xs': ['10px', { lineHeight: '14px', letterSpacing: '0.08em' }],
       },
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom)',
+      }
     },
   },
 } satisfies Config;

@@ -87,7 +87,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-50 transition-opacity" onClick={onClose} />
-      <div className="fixed z-50 flex flex-col bg-bg border-line-strong shadow-2xl overflow-hidden inset-x-0 bottom-0 h-[90vh] border-t md:inset-y-0 md:right-0 md:left-auto md:w-[480px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
+      <div className="fixed z-50 flex flex-col bg-bg border-line-strong shadow-2xl overflow-hidden inset-x-0 bottom-0 h-[100dvh] border-t md:inset-y-0 md:right-0 md:left-auto md:w-[480px] md:h-full md:border-l md:border-t-0 animate-in slide-in-from-bottom md:slide-in-from-right duration-200">
         
         <div className="flex items-center justify-between px-6 py-4 border-b border-line">
           <h2 className="font-serif text-xl text-petrol-deep">Nova demanda</h2>
