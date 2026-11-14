@@ -19,13 +19,7 @@ export default async function ConfigPage() {
         <h1 className="font-serif text-3xl text-petrol-deep dark:text-petrol mb-2">Configurações</h1>
         <p className="label-mono">Preferências da conta e gestão</p>
       </header>
-
-      <ConfigClient 
-        profile={profile} 
-        escritorios={escritorios ?? []} 
-        categorias={categorias ?? []} 
-        userId={user!.id} 
-      />
+      <ConfigClient profile={profile} escritorios={escritorios ?? []} categorias={categorias ?? []} userId={user!.id} />
     </div>
   );
 }
