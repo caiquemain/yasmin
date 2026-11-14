@@ -1,11 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import * as ReactJoyride from 'react-joyride';
-import { CallBackProps, STATUS, Step } from 'react-joyride';
-
-// Compatibilidade com a forma que a lib se exporta no Turbopack
-const Joyride = (ReactJoyride as any).Joyride || (ReactJoyride as any).default;
+import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
 
 export function Tutorial({ userId, concluido }: { userId: string, concluido: boolean }) {
   const [run, setRun] = useState(!concluido);
@@ -118,7 +114,7 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
     }
   };
 
-  if (!run || !Joyride) return null;
+  if (!run) return null;
 
   return (
     <Joyride
@@ -128,6 +124,7 @@ export function Tutorial({ userId, concluido }: { userId: string, concluido: boo
       showSkipButton
       showProgress
       disableScrolling
+      disableOverlayClose
       callback={handleJoyrideCallback}
       locale={{ back: 'Voltar', close: 'Fechar', last: 'Concluir', next: 'Próximo', skip: 'Pular tutorial' }}
       styles={{
