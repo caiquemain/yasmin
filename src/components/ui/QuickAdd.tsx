@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useEscape } from '@/hooks/useEscape';
 import { createClient } from '@/lib/supabase/client';
 import { X } from 'lucide-react';
 import { addDays, addWeeks, addMonths, format } from 'date-fns';
@@ -7,6 +8,7 @@ import { addDays, addWeeks, addMonths, format } from 'date-fns';
 export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  useEscape(onClose, isOpen);
   
   const [categorias, setCategorias] = useState<any[]>([]);
   const [obras, setObras] = useState<any[]>([]);

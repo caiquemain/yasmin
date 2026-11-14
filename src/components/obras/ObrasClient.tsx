@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useEscape } from '@/hooks/useEscape';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -24,6 +25,7 @@ export function ObrasClient({ clientes, escritorios, userId }: { clientes: any[]
   }, []);
   const [isObraModalOpen, setIsObraModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  useEscape(() => { setIsClienteModalOpen(false); setIsObraModalOpen(false); }, isClienteModalOpen || isObraModalOpen);
 
   const [formCliente, setFormCliente] = useState({ nome: '', tipo: 'arquiteto', escritorio_id: escritorios[0]?.id || '', contato: '' });
   const [formObra, setFormObra] = useState({ nome: '', cliente_id: '', area_m2: '', status_obra: 'orcamento', honorarios: '' });
