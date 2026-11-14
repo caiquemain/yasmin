@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
+// Formata a data. Para evitar problemas de fuso, usamos o formato flutuante (sem o Z no final)
 function formatICSDate(date: string, time?: string | null) {
-  const d = date.replace(/-/g, '');
+  const d = date.replace(/-/g, ''); // '2026-11-20' -> '20261120'
   if (!time) return `${d}`;
-  const t = time.replace(/:/g, '').slice(0, 4);
-  return `${d}T${t}00Z`;
+  const t = time.replace(/:/g, '').slice(0, 4); // '18:09:00' -> '1809'
+  return `${d}T${t}00`; 
 }
 
 export async function GET(
@@ -26,9 +27,14 @@ export async function GET(
     p_token: token
   });
 
-  // Se a função não retornar nada, o token é inválido
-  if (error || !demandas || demandas.length === 0) {
-    return new NextResponse('Calendar not found or empty', { status: 404 });
+  if (error) {
+    console.error("Erro RPC:", error);
+    return NextResponse.json({ erro_no_banco: error.message }, { status: 500 });
+  }
+
+  // Se o token for válido mas não tiver tarefas, retorna um calendário vazio válido
+  if (!demandas) {
+    return new NextResponse('Calendar not found', { status: 404 });
   }
 
   let ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Yasmin//PT-BR//EN\r\nCALSCALE:GREGORIAN\r\n`;
@@ -55,7 +61,7 @@ export async function GET(
   return new NextResponse(ics, {
     headers: {
       'Content-Type': 'text/calendar; charset=utf-8',
-      'Content-Disposition': 'attachment; filename="yasmin.ics"',
+      'Content-Disposition': 'inline; filename="yasmin.ics"',
       'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   });
