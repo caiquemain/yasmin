@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
-import webpush from 'web-push';
+import * as webpush from 'web-push';
 
-export const runtime = 'nodejs'; // Web Push precisa do Node, não pode ser Edge
+export const runtime = 'nodejs';
 
 export async function POST() {
   webpush.setVapidDetails(
