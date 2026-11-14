@@ -16,7 +16,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const { data: profile } = await supabase.from('profiles').select('nome').eq('id', user!.id).single();
   const today = new Date().toLocaleDateString('sv-SE');
 
-  let qHoje = supabase.from('demandas').select('id,tipo,titulo,status,prioridade,hora_inicio,revisao,categorias(nome,cor),escritorios(nome)').eq('data', today).neq('status', 'concluida').order('hora_inicio', { nullsFirst: false });
+  let qHoje = supabase.from('demandas').select('id,parent_id,tipo,titulo,status,prioridade,hora_inicio,revisao,categorias(nome,cor),escritorios(nome)').eq('data', today).neq('status', 'concluida').order('hora_inicio', { nullsFirst: false });
   if (esc) qHoje = qHoje.eq('escritorio_id', esc);
 
   let qBloq = supabase.from('demandas').select('id,titulo,created_at,obras(nome)').eq('status', 'aguardando_terceiros').order('created_at');

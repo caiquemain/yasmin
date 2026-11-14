@@ -54,10 +54,11 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
     };
 
     let payloads = [];
+    const parentId = crypto.randomUUID();
     const dataBase = new Date(form.data + 'T12:00:00'); // Meio-dia para evitar fuso
 
     if (form.recorrencia === 'none') {
-      payloads.push({ ...basePayload, data: form.data });
+      payloads.push({ ...basePayload, data: form.data, parent_id: parentId });
     } else {
       // Materializa as próximas ocorrências (ex: 4 semanas)
       const numOcorrencias = 4;
@@ -67,7 +68,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
         if (form.recorrencia === 'monthly') novaData = addMonths(dataBase, i);
 
-        payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd') });
+        payloads.push({ ...basePayload, data: format(novaData, 'yyyy-MM-dd'), parent_id: parentId });
       }
     }
 

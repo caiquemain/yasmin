@@ -7,6 +7,7 @@ import {
   isSameMonth, isSameDay, eachDayOfInterval
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Trash2 } from 'lucide-react';
 
 type ViewMode = 'mensal' | 'semanal' | 'diaria';
 
@@ -36,7 +37,7 @@ export function AgendaClient() {
 
     const { data } = await supabase
       .from('demandas')
-      .select('*, categorias(nome, cor), obras(nome)')
+      .select('*, parent_id, categorias(nome, cor), obras(nome)')
       .gte('data', format(start, 'yyyy-MM-dd'))
       .lte('data', format(end, 'yyyy-MM-dd'))
       .neq('status', 'concluida')
@@ -180,6 +181,7 @@ export function AgendaClient() {
                 <div className="flex-1 border-l-2 pl-4 pb-4 relative" style={{ borderColor: d.categorias?.cor || 'var(--color-line-strong)' }}>
                   <div className="absolute w-2 h-2 rounded-full -left-[5px] top-2" style={{ backgroundColor: d.categorias?.cor || 'var(--color-line-strong)' }} />
                   <h3 className="text-[15px] font-medium leading-tight">{d.titulo}</h3>
+                  <button onClick={() => handleDelete(d.id, d.parent_id)} className="absolute top-1 right-1 text-ink-faint hover:text-terra"><Trash2 size={14} /></button>
                   <div className="flex gap-2 mt-1">
                     {d.categorias && <span className="label-mono text-petrol">{d.categorias.nome}</span>}
                     {d.obras && <span className="label-mono text-ink dark:text-dark-ink-soft dark:text-dark-inkSoft">• {d.obras.nome}</span>}
