@@ -1,7 +1,7 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Bell, BellRing } from 'lucide-react';
 
 export function ConfigClient({ profile, escritorios: initialEscritorios, categorias: initialCategorias, userId }: any) {
   const supabase = createClient();
@@ -11,11 +11,23 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Estados para Notificações
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [loadingPush, setLoadingPush] = useState(false);
+  const [testandoPush, setTestandoPush] = useState(false);
+
   const [novoEscritorio, setNovoEscritorio] = useState('');
   const [escritorios, setEscritorios] = useState(initialEscritorios);
   const [novaCategoria, setNovaCategoria] = useState('');
   const [categorias, setCategorias] = useState(initialCategorias);
   const [exportando, setExportando] = useState(false);
+
+  // Verifica se já tem permissão de notificação
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      setIsSubscribed(true);
+    }
+  }, []);
 
   const savePerfil = async () => {
     setLoadingPerfil(true);
@@ -28,24 +40,58 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
     try {
       setUploadingAvatar(true);
       if (!event.target.files || event.target.files.length === 0) return;
-      
       const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
-      const filePath = `${userId}/${Math.random()}.${fileExt}`;
-
+      const filePath = `${userId}/${Math.random()}.${file.name.split('.').pop()}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
       if (uploadError) throw uploadError;
-
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
-      const { error: updateError } = await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
-      if (updateError) throw updateError;
-
+      await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', userId);
       setAvatarUrl(publicUrl);
     } catch (error: any) {
       alert('Erro ao fazer upload: ' + error.message);
     } finally {
       setUploadingAvatar(false);
     }
+  };
+
+  const ativarNotificacoes = async () => {
+    try {
+      setLoadingPush(true);
+      // Pede permissão ao usuário
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        alert('Você precisa permitir as notificações nas configurações do navegador.');
+        return;
+      }
+
+      // Registra o Service Worker e se inscreve
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+      });
+
+      // Envia para o banco
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(subscription)
+      });
+
+      setIsSubscribed(true);
+    } catch (error: any) {
+      alert('Erro ao ativar notificações: ' + error.message);
+    } finally {
+      setLoadingPush(false);
+    }
+  };
+
+  const testarNotificacao = async () => {
+    setTestandoPush(true);
+    const res = await fetch('/api/push/test', { method: 'POST' });
+    const data = await res.json();
+    if (data.error) alert(data.error);
+    setTestandoPush(false);
   };
 
   const addEscritorio = async (e: React.FormEvent) => {
@@ -84,16 +130,32 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
     setExportando(false);
   };
 
-  const urlICS = typeof window !== 'undefined' && profile?.calendar_token
-    ? `${window.location.origin}/api/calendar/${profile.calendar_token}`
-    : '';
+  const urlICS = typeof window !== 'undefined' && profile?.calendar_token ? `${window.location.origin}/api/calendar/${profile.calendar_token}` : '';
 
   return (
     <div className="space-y-8 w-full max-w-full overflow-hidden">
+      
+      {/* NOVO: Seção de Notificações */}
+      <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
+        <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-1">Notificações Push</h2>
+        <p className="text-sm text-ink-soft dark:text-dark-inkSoft mb-6">Ative para receber lembretes no celular mesmo com o app fechado.</p>
+        
+        <div className="flex flex-col md:flex-row gap-3">
+          {!isSubscribed ? (
+            <button onClick={ativarNotificacoes} disabled={loadingPush} className="flex-1 flex items-center justify-center gap-2 py-3 bg-petrol-deep text-bg text-sm font-medium hover:bg-petrol transition disabled:opacity-50">
+              <Bell size={18} /> {loadingPush ? 'Ativando...' : 'Ativar Notificações'}
+            </button>
+          ) : (
+            <button onClick={testarNotificacao} disabled={testandoPush} className="flex-1 flex items-center justify-center gap-2 py-3 border border-line-strong dark:border-dark-line text-petrol-deep dark:text-petrol text-sm font-medium hover:bg-bg dark:hover:bg-dark-bg transition disabled:opacity-50">
+              <BellRing size={18} /> {testandoPush ? 'Enviando...' : 'Enviar Notificação de Teste'}
+            </button>
+          )}
+        </div>
+      </section>
+
       {/* Perfil */}
       <section className="bg-surface dark:bg-dark-surface p-5 md:p-6 border border-line-strong dark:border-dark-line w-full">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6">Perfil</h2>
-        
         <div className="flex flex-col md:flex-row gap-6 items-start md:items-center w-full">
           <div className="relative group cursor-pointer flex-shrink-0" onClick={() => fileInputRef.current?.click()}>
             <div className="w-20 h-20 rounded-full bg-petrol text-bg flex items-center justify-center overflow-hidden border-2 border-transparent group-hover:border-petrol transition">
@@ -104,14 +166,11 @@ export function ConfigClient({ profile, escritorios: initialEscritorios, categor
             </div>
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleAvatarUpload} disabled={uploadingAvatar} />
           </div>
-
           <div className="flex-1 w-full space-y-3">
             <label className="label-mono block">Como você quer ser chamada?</label>
             <div className="flex flex-col md:flex-row gap-3 items-start md:items-end w-full">
               <input type="text" value={nome} onChange={e => setNome(e.target.value)} className="w-full bg-transparent border-b border-line-strong dark:border-dark-line py-2 text-lg focus:outline-none focus:border-petrol text-ink dark:text-dark-ink" />
-              <button onClick={savePerfil} disabled={loadingPerfil} className="w-full md:w-auto px-6 py-2 bg-petrol-deep text-bg label-mono hover:bg-petrol transition flex-shrink-0">
-                {loadingPerfil ? 'Salvando...' : 'Salvar'}
-              </button>
+              <button onClick={savePerfil} disabled={loadingPerfil} className="w-full md:w-auto px-6 py-2 bg-petrol-deep text-bg label-mono hover:bg-petrol transition flex-shrink-0">{loadingPerfil ? 'Salvando...' : 'Salvar'}</button>
             </div>
           </div>
         </div>
