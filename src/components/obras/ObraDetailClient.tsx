@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Check, Plus, X, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
@@ -12,6 +12,12 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
   
   const [parcelas, setParcelas] = useState(initialParcelas);
   const [isParcelaModalOpen, setIsParcelaModalOpen] = useState(false);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') { setIsParcelaModalOpen(false); setIsArtModalOpen(false); } };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const [formParcela, setFormParcela] = useState({ descricao: '', valor: '', data_prevista: '' });
   
   const [loading, setLoading] = useState(false);

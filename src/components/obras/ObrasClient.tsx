@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 
@@ -16,6 +16,12 @@ const tipoLabel: Record<string, string> = {
 export function ObrasClient({ clientes, escritorios, userId }: { clientes: any[], escritorios: any[], userId: string }) {
   const supabase = createClient();
   const [isClienteModalOpen, setIsClienteModalOpen] = useState(false);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape') { setIsClienteModalOpen(false); setIsObraModalOpen(false); } };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
   const [isObraModalOpen, setIsObraModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
