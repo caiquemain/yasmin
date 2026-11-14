@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { IBM_Plex_Sans, IBM_Plex_Mono, Dancing_Script, IBM_Plex_Serif } from 'next/font/google';
 import { PwaRegister } from '@/components/PwaRegister';
+import { UpdateToast } from '@/components/ui/UpdateToast';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
@@ -19,7 +20,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  viewportFit: 'cover', // <-- ISSO É O SEGREDO PARA O POCO X7
+  viewportFit: 'cover', 
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PwaRegister />
+        <UpdateToast />
         {children}
       </body>
     </html>
