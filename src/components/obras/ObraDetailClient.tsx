@@ -2,7 +2,8 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Check, Plus, X, ChevronUp, ChevronDown, Trash2 } from 'lucide-react';
+import { Check, Plus, X, ChevronUp, ChevronDown, Trash2, FileDown } from 'lucide-react';
+import { generateObraPDF } from '@/lib/generateObraPDF';
 
 export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas }: { obra: any, checklist: any[], initialParcelas: any[] }) {
   const supabase = createClient();
@@ -165,7 +166,12 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
       <div className="mb-10">
         <Link href="/obras" className="label-mono text-petrol hover:underline mb-4 inline-block">← Voltar para Obras</Link>
-        <h1 className="font-serif text-4xl text-petrol-deep dark:text-petrol mb-2">{obra.nome}</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="font-serif text-4xl text-petrol-deep dark:text-petrol">{obra.nome}</h1>
+          <button onClick={() => generateObraPDF(obra, checklist, parcelas)} className="flex items-center gap-2 px-3 py-1.5 border border-line-strong dark:border-dark-line label-mono hover:bg-surface dark:hover:bg-dark-surface transition text-petrol-deep dark:text-petrol text-xs">
+            <FileDown size={14} /> PDF
+          </button>
+        </div>
         <div className="flex gap-4 label-mono">
           <span>{obra.clientes.nome}</span>
           {obra.area_m2 && <span>{obra.area_m2} m²</span>}
