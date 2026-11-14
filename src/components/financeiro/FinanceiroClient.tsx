@@ -1,11 +1,17 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
   const [filtro, setFiltro] = useState<'todos' | 'pendente' | 'pago'>('todos');
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Só renderiza o gráfico depois que a tela montar no navegador (evita erros de SSR do Recharts)
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -17,7 +23,19 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
     const agrupado: Record<string, { mes: string; pago: number; pendente: number }> = {};
 
     parcelas.forEach(p => {
-      const dataRef = p.data_prevista ? parseISO(p.data_prevista) : parseISO(p.created_at);
+      // Proteção para datas nulas ou em formato inválido
+      let dataRef = new Date();
+      if (p.data_prevista) {
+        dataRef = parseISO(p.data_prevista);
+      } else if (p.created_at) {
+        // Troca o espaço por 'T' para o parseISO conseguir ler
+        const iso = p.created_at.replace(' ', 'T');
+        const parsed = parseISO(iso);
+        if (isValid(parsed)) dataRef = parsed;
+      }
+      
+      if (!isValid(dataRef)) return; // Se a data for inválida, pula
+
       const mesAno = format(dataRef, 'MMM/yy', { locale: ptBR });
       
       if (!agrupado[mesAno]) {
@@ -56,31 +74,37 @@ export function FinanceiroClient({ parcelas }: { parcelas: any[] }) {
       <section className="bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line p-6">
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6">Evolução Mensal</h2>
         <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2DDE2" />
-              <XAxis 
-                dataKey="mes" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#A88C95', fontSize: 12, fontFamily: 'monospace' }} 
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#A88C95', fontSize: 12, fontFamily: 'monospace' }}
-                tickFormatter={(value) => `R$${value/1000}k`}
-              />
-              <Tooltip 
-                cursor={{ fill: 'rgba(200, 90, 126, 0.05)' }}
-                contentStyle={{ backgroundColor: '#FCEFF2', borderColor: '#D4AEB8', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}
-                formatter={(value: any) => formatBRL(Number(value))}
-              />
-              <Bar dataKey="pago" name="Recebido" stackId="a" fill="#C85A7E" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="pendente" name="A Receber" stackId="a" fill="#E08EA8" radius={[2, 2, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {isMounted ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2DDE2" />
+                <XAxis 
+                  dataKey="mes" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#A88C95', fontSize: 12, fontFamily: 'monospace' }} 
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#A88C95', fontSize: 12, fontFamily: 'monospace' }}
+                  tickFormatter={(value) => `R$${value/1000}k`}
+                />
+                <Tooltip 
+                  cursor={{ fill: 'rgba(200, 90, 126, 0.05)' }}
+                  contentStyle={{ backgroundColor: '#FCEFF2', borderColor: '#D4AEB8', borderRadius: '4px', fontFamily: 'monospace', fontSize: '12px' }}
+                  formatter={(value: any) => formatBRL(Number(value))}
+                />
+                <Bar dataKey="pago" name="Recebido" stackId="a" fill="#C85A7E" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="pendente" name="A Receber" stackId="a" fill="#E08EA8" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="label-mono">Carregando gráfico...</span>
+            </div>
+          )}
         </div>
         <div className="flex gap-6 mt-4 justify-center">
           <div className="flex items-center gap-2"><div className="w-3 h-3 bg-[#C85A7E]"></div><span className="label-mono">Recebido</span></div>
