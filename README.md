@@ -1,36 +1,30 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Yasmin - Caderno Técnico Digital
 
-## Getting Started
+Aplicação web progressiva (PWA) de organização pessoal e gestão de projetos estruturais, desenvolvida sob medida para engenheira calculista.
 
-First, run the development server:
+## 🚀 Stack Técnica
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **Estilização:** Tailwind CSS v3 + Design System customizado (Tema Rosa Editorial)
+- **Banco de Dados & Auth:** Supabase (PostgreSQL, RLS, Auth com Google/Magic Link)
+- **Deploy:** Vercel
+- **Bibliotecas:** `@supabase/ssr`, `date-fns`, `recharts`, `jspdf`, `driver.js`, `lucide-react`, `web-push`
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Funcionalidades Principais
+- **Dashboard (Home):** Resumo do dia, obras em andamento e pendências bloqueadas.
+- **Agenda:** Visões mensal, semanal e diária.
+- **CRM Técnico:** Gestão hierárquica de Clientes → Obras.
+- **Ficha da Obra:** Checklist de cálculo, Premissas Técnicas (fck, CAA, etc.), controle de ART e Financeiro.
+- **Exportações:** Ficha da obra em PDF e sincronização com Google Agenda via feed `.ics`.
+- **PWA:** Instalável, suporte a Dark Mode, Notificações Push e Service Worker com auto-update.
+- **Extras:** Busca global (Cmd+K), tutorial guiado por página e backup de dados em JSON.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Como rodar localmente
+1. Clone o repositório: `git clone ...`
+2. Instale as dependências: `npm install`
+3. Configure o `.env.local` com as chaves do Supabase (URL, ANON_KEY, e VAPID keys do Web Push).
+4. Rode o projeto: `npm run dev`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🔐 Segurança
+- Row Level Security (RLS) ativado em todas as tabelas do banco.
+- Headers de segurança (CSP, HSTS, X-Frame-Options) configurados no Next.js.
+- Bucket de Storage (avatares) restrito a imagens de até 2MB.
