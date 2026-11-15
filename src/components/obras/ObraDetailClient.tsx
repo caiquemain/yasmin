@@ -2,16 +2,31 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { Check, Plus, X, ChevronUp, ChevronDown, Trash2, FileDown } from 'lucide-react';
+import { Check, Plus, X, ChevronUp, ChevronDown, Trash2, FileDown, ListTodo } from 'lucide-react';
 import { generateObraPDF } from '@/lib/generateObraPDF';
 import { PageTour } from '@/components/ui/PageTour';
+import { openDemandaEditor } from '@/hooks/useEditarDemanda';
+import { enqueueAction, hasPendingCreateFor, removeCreateFromQueue } from '@/lib/offline/syncManager';
 
-export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas, userId }: { obra: any, checklist: any[], initialParcelas: any[], userId: string }) {
+export function ObraDetailClient({ 
+  obra, 
+  checklist: initialChecklist, 
+  initialParcelas, 
+  initialTarefas, 
+  userId 
+}: { 
+  obra: any; 
+  checklist: any[]; 
+  initialParcelas: any[]; 
+  initialTarefas: any[]; 
+  userId: string 
+}) {
   const supabase = createClient();
   
   const [checklist, setChecklist] = useState(initialChecklist);
   const [novoItemChecklist, setNovoItemChecklist] = useState('');
   const [parcelas, setParcelas] = useState(initialParcelas);
+  const [tarefas, setTarefas] = useState(initialTarefas);
   const [isParcelaModalOpen, setIsParcelaModalOpen] = useState(false);
   const [formParcela, setFormParcela] = useState({ descricao: '', valor: '', data_prevista: '' });
   const [loading, setLoading] = useState(false);
@@ -93,6 +108,26 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
     setLoadingParcela(false);
   };
 
+  const openNewTarefa = () => {
+    window.dispatchEvent(new CustomEvent('open-demanda-new', {
+      detail: { defaults: { obra_id: obra.id, cliente_id: obra.cliente_id } }
+    }));
+  };
+
+  const handleConcluirTarefa = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setTarefas(prev => prev.filter(t => t.id !== id));
+    if (hasPendingCreateFor(id)) {
+      removeCreateFromQueue(id);
+      return;
+    }
+    if (!navigator.onLine) {
+      enqueueAction({ type: 'complete_demanda', payload: { demandaId: id } });
+      return;
+    }
+    await supabase.from('demandas').update({ status: 'concluida', concluida_em: new Date().toISOString() }).eq('id', id);
+  };
+
   const progresso = checklist.length ? Math.round((checklist.filter(c => c.concluido).length / checklist.length) * 100) : 0;
   const totalPago = parcelas.filter(p => p.status === 'pago').reduce((acc, p) => acc + Number(p.valor), 0);
   const totalPendente = parcelas.filter(p => p.status === 'pendente').reduce((acc, p) => acc + Number(p.valor), 0);
@@ -101,21 +136,22 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
   const tourSteps = [
     { element: 'body', popover: { title: 'Ficha Técnica da Obra', description: 'Este é o prontuário completo do projeto. Tudo sobre essa obra fica aqui.' } },
-    { element: '[data-tour="obra-header"]', popover: { title: 'Cabeçalho e PDF', description: 'Aqui você vê o nome, cliente e área. Clique em PDF para gerar um relatório pronto para enviar!', side: 'bottom' as const, align: 'start' as const } },
-    { element: '[data-tour="obra-checklist"]', popover: { title: 'Checklist de Cálculo', description: 'Marque as etapas conforme avança. Você pode reordenar com as setinhas e criar novas etapas abaixo.', side: 'right' as const, align: 'start' as const } },
-    { element: '[data-tour="obra-financeiro"]', popover: { title: 'Financeiro', description: 'Aqui ficam as parcelas desta obra. Marque o checkbox para registrar o recebimento.', side: 'top' as const, align: 'start' as const } },
-    { element: '[data-tour="obra-premissas"]', popover: { title: 'Premissas de Cálculo', description: 'Anote o fck, CAA, tensão do solo e cobrimento. Tudo fica salvo para consulta rápida.', side: 'left' as const, align: 'start' as const } },
-    { element: '[data-tour="obra-art"]', popover: { title: 'ART', description: 'Gerencie o número e o status da ART dessa obra aqui.', side: 'left' as const, align: 'start' as const } }
+    { element: '[data-tour="obra-header"]', popover: { title: 'Cabeçalho e PDF', description: 'Aqui você vê o nome, cliente e área. Clique em PDF para gerar um relatório!', side: 'bottom' as const, align: 'start' as const } },
+    { element: '[data-tour="obra-tarefas"]', popover: { title: 'Tarefas da Obra', description: 'Todas as tarefas vinculadas a esta obra ficam aqui.', side: 'right' as const, align: 'start' as const } },
+    { element: '[data-tour="obra-checklist"]', popover: { title: 'Checklist de Cálculo', description: 'Marque as etapas conforme avança. Reordene com as setinhas.', side: 'right' as const, align: 'start' as const } },
+    { element: '[data-tour="obra-financeiro"]', popover: { title: 'Financeiro', description: 'Parcelas desta obra. Marque o checkbox para registrar o recebimento.', side: 'top' as const, align: 'start' as const } },
+    { element: '[data-tour="obra-premissas"]', popover: { title: 'Premissas de Cálculo', description: 'Anote o fck, CAA, σsolo e cobrimento.', side: 'left' as const, align: 'start' as const } },
+    { element: '[data-tour="obra-art"]', popover: { title: 'ART', description: 'Gerencie o número e o status da ART.', side: 'left' as const, align: 'start' as const } }
   ];
 
   return (
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
-      <PageTour storageKey="tour_obra_v1" steps={tourSteps} />
+      <PageTour storageKey="tour_obra_v2" steps={tourSteps} />
 
       <div className="mb-10" data-tour="obra-header">
         <Link href="/obras" className="label-mono text-petrol hover:underline mb-4 inline-block">← Voltar para Obras</Link>
-        <div className="flex items-center justify-between mb-2">
-          <h1 className="font-serif text-3xl md:text-4xl text-petrol-deep dark:text-petrol">{obra.nome}</h1>
+        <div className="flex items-center justify-between mb-2 gap-2">
+          <h1 className="font-serif text-3xl md:text-4xl text-petrol-deep dark:text-petrol break-words">{obra.nome}</h1>
           <button onClick={() => generateObraPDF(obra, checklist, parcelas)} className="flex items-center gap-2 px-3 py-1.5 border border-line-strong dark:border-dark-line label-mono hover:bg-surface dark:hover:bg-dark-surface transition text-petrol-deep dark:text-petrol text-xs flex-shrink-0">
             <FileDown size={14} /> PDF
           </button>
@@ -129,6 +165,52 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-10">
         <div className="space-y-10">
+          <section data-tour="obra-tarefas">
+            <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
+              <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol flex items-center gap-2">
+                <ListTodo size={20} className="text-petrol" />
+                Tarefas da Obra
+              </h2>
+              <button onClick={openNewTarefa} className="label-mono text-petrol hover:underline">+ Nova tarefa</button>
+            </div>
+            {tarefas.length === 0 ? (
+              <p className="text-sm text-ink-soft dark:text-dark-inkSoft italic py-4">Nenhuma tarefa vinculada a esta obra.</p>
+            ) : (
+              <ul className="space-y-2">
+                {tarefas.map(t => (
+                  <li
+                    key={t.id}
+                    onClick={() => openDemandaEditor(t.id)}
+                    className="flex items-center gap-3 p-3 border border-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface group hover:bg-bg dark:hover:bg-dark-bg transition cursor-pointer"
+                  >
+                    <button
+                      onClick={(e) => handleConcluirTarefa(e, t.id)}
+                      className="w-5 h-5 border border-line-strong dark:border-dark-line flex items-center justify-center flex-shrink-0 hover:border-petrol hover:bg-petrol/10 transition"
+                      title="Concluir tarefa"
+                    >
+                      <Check size={12} className="text-petrol opacity-0 hover:opacity-100 transition" strokeWidth={3} />
+                    </button>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[14.5px] block text-ink dark:text-dark-ink truncate">{t.titulo}</span>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                        {t.categorias && <span className="label-mono" style={{ color: t.categorias.cor }}>{t.categorias.nome}</span>}
+                        <span className="label-mono text-ink-faint dark:text-dark-inkSoft">
+                          {new Date(t.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                        </span>
+                        {t.revisao && <span className="label-mono text-terra">{t.revisao}</span>}
+                      </div>
+                    </div>
+                    <span className={`font-mono text-[10px] uppercase tracking-wider flex-shrink-0 ${
+                      t.prioridade === 'alta' ? 'text-terra' : t.prioridade === 'media' ? 'text-ink-soft dark:text-dark-inkSoft' : 'text-ink-faint dark:text-dark-inkSoft'
+                    }`}>
+                      {t.prioridade === 'media' ? '—' : t.prioridade}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
           <section data-tour="obra-checklist">
             <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-4">
               <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol">Checklist de Cálculo</h2>
