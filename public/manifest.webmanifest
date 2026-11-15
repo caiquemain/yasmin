@@ -1,7 +1,7 @@
 {
-  "name": "Yasmin - Gestão de Obras",
+  "name": "Yasmin - Gest\u00e3o de Obras",
   "short_name": "Yasmin",
-  "description": "Organização pessoal e gestão de projetos estruturais",
+  "description": "Organiza\u00e7\u00e3o pessoal e gest\u00e3o de projetos estruturais",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,13 +9,22 @@
   "background_color": "#FDF6F8",
   "theme_color": "#C85A7E",
   "lang": "pt-BR",
-  "categories": ["productivity", "business"],
+  "categories": [
+    "productivity",
+    "business"
+  ],
   "icons": [
     {
       "src": "/icon",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/apple-icon",
