@@ -41,6 +41,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             } catch (_) {}
           `
         }} />
+      <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="alternate icon" href="/icon" type="image/png" />
       </head>
       <body>
         <PwaRegister />
