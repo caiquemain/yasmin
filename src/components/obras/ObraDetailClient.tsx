@@ -44,9 +44,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
   const addChecklistItem = async (e: React.FormEvent) => {
     e.preventDefault(); if (!novoItemChecklist) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data } = await supabase.from('obra_checklist').insert([{ user_id: user.id, obra_id: obra.id, titulo: novoItemChecklist, ordem: checklist.length + 1 }]).select().single();
+    const { data } = await supabase.from('obra_checklist').insert([{ user_id: userId, obra_id: obra.id, titulo: novoItemChecklist, ordem: checklist.length + 1 }]).select().single();
     if (data) { setChecklist([...checklist, data]); setNovoItemChecklist(''); }
   };
 
@@ -88,9 +86,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
   const handleCreateParcela = async (e: React.FormEvent) => {
     e.preventDefault(); setLoadingParcela(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    const payload = { user_id: user.id, obra_id: obra.id, descricao: formParcela.descricao, valor: Number(formParcela.valor), data_prevista: formParcela.data_prevista || null, ordem: parcelas.length, status: 'pendente' };
+    const payload = { user_id: userId, obra_id: obra.id, descricao: formParcela.descricao, valor: Number(formParcela.valor), data_prevista: formParcela.data_prevista || null, ordem: parcelas.length, status: 'pendente' };
     const { data, error } = await supabase.from('obra_parcelas').insert([payload]).select().single();
     if (error) alert(error.message);
     else { setParcelas([...parcelas, data]); setIsParcelaModalOpen(false); setFormParcela({ descricao: '', valor: '', data_prevista: '' }); }
@@ -114,7 +110,7 @@ export function ObraDetailClient({ obra, checklist: initialChecklist, initialPar
 
   return (
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
-      <PageTour storageKey={`tour_obra_v1`} steps={tourSteps} />
+      <PageTour storageKey="tour_obra_v1" steps={tourSteps} />
 
       <div className="mb-10" data-tour="obra-header">
         <Link href="/obras" className="label-mono text-petrol hover:underline mb-4 inline-block">← Voltar para Obras</Link>
