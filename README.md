@@ -170,6 +170,46 @@ Após o deploy, atualizar no Supabase (Authentication → URL Configuration):
 
 ---
 
+
+---
+
+## Backlog / Próximos Passos
+
+Estas são as funcionalidades e melhorias que ficaram **fora do escopo do MVP** e que podem ser implementadas no futuro, conforme o uso real revelar necessidade.
+
+### Features opcionais
+
+| Feature | Complexidade | Quando faz sentido |
+|---|---|---|
+| Notificações push automáticas de vencimento (Cron Job às 8h) | Baixa | Após 2-4 semanas de uso, se a Yasmin esquecer tarefas |
+| Edição de tarefa no modo offline (UI otimista) | Alta | Se ela reclamar de não poder editar no canteiro sem sinal |
+| Domínio próprio (yasmin.app.br) | Baixa | Antes de compartilhar com clientes (credibilidade) |
+| Google Agenda Two-Way (OAuth real) | Alta | Se ela reclamar que precisa editar eventos pelo Google |
+| Relatório mensal em PDF (faturamento por escritório) | Média | Se ela tiver muitos clientes e precisar formalizar |
+| Multi-usuário (convidar estagiário/sócio) | Alta | Se ela montar equipe |
+| Upload de anexos (DWG, IFC, PDF) | Média | Se ela quiser centralizar arquivos no app (hoje usa Drive) |
+| Customização de tipologias estruturais | Baixa | Se ela precisar de protensão, pré-moldado, madeira etc |
+| Filtro de tarefas por data/prioridade na Home | Baixa | Quando o volume de tarefas crescer |
+
+### Limitações conhecidas
+
+- **Offline (Write-Only):** criar/concluir/deletar funcionam offline. Editar requer conexão. Visualizar lista antiga também requer conexão.
+- **Google Agenda:** sincronização é one-way (app → Google via ICS). Latência de algumas horas.
+- **Notificações push:** funcionam com o app fechado, mas exigem permissão ativada manualmente em Configurações.
+- **Magic Link (email):** no plano free do Supabase, o envio de email tem limite de 2/hora. Por isso o Google OAuth é o método recomendado.
+- **Supabase free tier:** o projeto pausa se ficar 7 dias sem acesso. Basta acessar uma vez por semana para manter ativo.
+
+### Ideias para fase 5+
+
+- Dashboard com KPI de produtividade semanal
+- Integração com Trello/Notion (importar/exportar)
+- Análise de rentabilidade por obra (honorários vs horas gastas)
+- Templates de checklist por tipologia estrutural
+- Modo apresentação (para mostrar obra ao cliente)
+- Assinatura digital de documentos (ART, contratos)
+
+---
+
 ## Autor
 
 Desenvolvido por Caique Main (https://github.com/caiquemain) para uso pessoal de uma engenheira calculista.
