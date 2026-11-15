@@ -9,6 +9,7 @@ import {
 import { ptBR } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';
 import { PageTour } from '@/components/ui/PageTour';
+import { openDemandaEditor } from '@/hooks/useEditarDemanda';
 
 type ViewMode = 'mensal' | 'semanal' | 'diaria';
 
@@ -19,10 +20,8 @@ export function AgendaClient() {
   const [demandas, setDemandas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Função para buscar as demandas no banco baseada na data atual
   const fetchDemandas = async () => {
     setLoading(true);
-    
     let start, end;
     if (view === 'mensal') {
       start = startOfWeek(startOfMonth(currentDate));
@@ -47,13 +46,12 @@ export function AgendaClient() {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchDemandas();
-  }, [currentDate, view]);
+  useEffect(() => { fetchDemandas(); }, [currentDate, view]);
 
-  const handleDelete = async (id: string, parentId: string | null) => {
+  const handleDelete = async (e: React.MouseEvent, id: string, parentId: string | null) => {
+    e.stopPropagation();
     if (parentId) {
-      if (confirm('Esta tarefa faz parte de uma série recorrente. Deseja excluir TODAS as tarefas futuras desta série?')) {
+      if (confirm('Esta tarefa faz parte de uma série. Excluir TODAS as futuras?')) {
         await supabase.from('demandas').delete().eq('parent_id', parentId);
         fetchDemandas();
       } else {
@@ -156,7 +154,11 @@ export function AgendaClient() {
                   <span className="text-xs text-ink-faint dark:text-dark-inkSoft text-center mt-4 italic">Vazio</span>
                 ) : (
                   dayDemandas.map(d => (
-                    <div key={d.id} className="p-2 border border-line dark:border-dark-line bg-bg/50 dark:bg-dark-bg/50 text-xs text-ink dark:text-dark-ink">
+                    <div 
+                      key={d.id} 
+                      onClick={() => openDemandaEditor(d.id)}
+                      className="p-2 border border-line dark:border-dark-line bg-bg/50 dark:bg-dark-bg/50 text-xs text-ink dark:text-dark-ink cursor-pointer hover:bg-petrol/10 transition"
+                    >
                       {d.hora_inicio && <span className="block font-mono text-[10px] text-petrol mb-1">{d.hora_inicio.slice(0,5)}</span>}
                       <span className="block leading-tight">{d.titulo}</span>
                     </div>
@@ -186,7 +188,11 @@ export function AgendaClient() {
         ) : (
           <div className="space-y-4">
             {dayDemandas.map(d => (
-              <div key={d.id} className="flex gap-4 group relative">
+              <div 
+                key={d.id} 
+                className="flex gap-4 group relative cursor-pointer hover:bg-bg dark:hover:bg-dark-bg p-2 -m-2 rounded transition"
+                onClick={() => openDemandaEditor(d.id)}
+              >
                 <div className="w-16 flex-shrink-0 text-right pt-1">
                   <span className="font-mono text-sm text-petrol">{d.hora_inicio ? d.hora_inicio.slice(0,5) : '—'}</span>
                 </div>
@@ -201,7 +207,7 @@ export function AgendaClient() {
                         {d.revisao && <span className="label-mono text-terra">• {d.revisao}</span>}
                       </div>
                     </div>
-                    <button onClick={() => handleDelete(d.id, d.parent_id)} className="text-ink-faint hover:text-terra md:opacity-0 group-hover:opacity-100 transition p-1">
+                    <button onClick={(e) => handleDelete(e, d.id, d.parent_id)} className="text-ink-faint hover:text-terra md:opacity-0 group-hover:opacity-100 transition p-1">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -216,20 +222,20 @@ export function AgendaClient() {
 
   return (
     <div>
+      <PageTour storageKey="tour_agenda_v1" steps={[
+        { element: "body", popover: { title: "Agenda", description: "Aqui você vê todas as suas tarefas e compromissos organizados no tempo." } },
+        { element: '[data-tour="agenda-views"]', popover: { title: "Visões", description: "Alterne entre a visão Mensal, Semanal e Diária.", side: "bottom", align: "start" } },
+        { element: '[data-tour="agenda-nav"]', popover: { title: "Navegação", description: "Use as setas para navegar entre períodos, ou clique em Hoje.", side: "bottom", align: "end" } },
+        { element: '[data-tour="agenda-grid"]', popover: { title: "Calendário", description: "Clique em qualquer tarefa para editá-la.", side: "top", align: "center" } }
+      ]} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div data-tour="agenda-views" className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line w-fit">
           {(['mensal', 'semanal', 'diaria'] as ViewMode[]).map(v => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}
-            >
-              {v}
-            </button>
+            <button key={v} onClick={() => setView(v)} className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>{v}</button>
           ))}
         </div>
 
-        <div className="flex items-center gap-4">
+        <div data-tour="agenda-nav" className="flex items-center gap-4">
           <button onClick={goToday} className="label-mono border border-line-strong dark:border-dark-line px-3 py-1 hover:bg-surface dark:hover:bg-dark-surface transition text-ink dark:text-dark-ink">Hoje</button>
           <div className="flex items-center border border-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface">
             <button onClick={prev} className="px-3 py-1 hover:bg-line/30 dark:hover:bg-dark-line/30 transition text-ink dark:text-dark-ink">←</button>
@@ -239,7 +245,7 @@ export function AgendaClient() {
         </div>
       </div>
 
-      <div data-tour="agenda-grid" className={loading ? "opacity-50 pointer-events-none transition-opacity" : "transition-opacity"}>
+      <div data-tour="agenda-grid" className={loading ? 'opacity-50 pointer-events-none transition-opacity' : 'transition-opacity'}>
         {view === 'mensal' && renderMensal()}
         {view === 'semanal' && renderSemanal()}
         {view === 'diaria' && renderDiaria()}

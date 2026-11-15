@@ -1,13 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useRouter } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { EscritorioFilter } from './EscritorioFilter';
 import { QuickAdd } from '../ui/QuickAdd';
 import { SearchModal } from '../ui/SearchModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { Tutorial } from '../ui/Tutorial';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useTrackRoute } from '@/hooks/useTrackRoute';
@@ -24,11 +23,26 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const search = useSearchParams();
   const escAtual = search.get('esc') ?? 'todos';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [demandaParaEditar, setDemandaParaEditar] = useState<any>(null);
   const router = useRouter();
   const supabase = createClient();
+  useTrackRoute();
+
+  // Escuta o evento global para abrir o editor de demanda
+  useEffect(() => {
+    const handleOpenEditor = async (e: any) => {
+      const { demandaId } = e.detail;
+      const { data } = await supabase.from('demandas').select('*').eq('id', demandaId).single();
+      if (data) {
+        setDemandaParaEditar(data);
+        setIsQuickAddOpen(true);
+      }
+    };
+    window.addEventListener('open-demanda-editor', handleOpenEditor);
+    return () => window.removeEventListener('open-demanda-editor', handleOpenEditor);
+  }, [supabase]);
 
   const active = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
-  useTrackRoute();
 
   const handleLogout = async () => {
     if (!confirm('Tem certeza que quer sair?')) return;
@@ -36,12 +50,21 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
     router.push('/login');
   };
 
+  const handleCloseQuickAdd = () => {
+    setIsQuickAddOpen(false);
+    setDemandaParaEditar(null);
+  };
+
+  const handleOpenCreate = () => {
+    setDemandaParaEditar(null);
+    setIsQuickAddOpen(true);
+  };
+
   return (
     <div className="min-h-[100dvh] flex bg-bg dark:bg-dark-bg text-ink dark:text-dark-ink transition-colors duration-300">
       
       <Tutorial userId={userId} concluido={profile?.tutorial_concluido ?? false} />
 
-      {/* Sidebar (Desktop) */}
       <aside className="hidden md:flex w-60 bg-surface dark:bg-dark-surface border-r border-line-strong dark:border-dark-line flex-col py-6 shrink-0 transition-colors">
         <div className="flex items-center justify-between px-6 pb-5 border-b border-line dark:border-dark-line mb-4">
           <div className="font-logo text-2xl text-petrol-deep dark:text-petrol">Yasmin<span className="text-terra dark:text-terra">.</span></div>
@@ -82,7 +105,6 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           </Link>
         </nav>
 
-        {/* Perfil e Logout Desktop */}
         <div className="mt-auto px-4 pt-4 border-t border-line dark:border-dark-line">
           <div className="flex items-center justify-between" data-tour="avatar">
             <div className="flex items-center gap-3 label-mono min-w-0">
@@ -99,7 +121,6 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
       </aside>
 
       <main className="flex-1 min-w-0 pb-24 md:pb-0">
-        {/* Header Mobile */}
         <div className="border-b border-line dark:border-dark-line bg-bg/80 dark:bg-dark-bg/80 backdrop-blur-sm sticky top-0 z-30 flex items-center justify-between px-4 py-2 pt-[calc(env(safe-area-inset-top)+8px)]">
           {escritorios.length > 0 ? (
             <div className="flex items-center gap-2 max-w-[60%]">
@@ -119,7 +140,6 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
         {children}
       </main>
 
-      {/* Bottom Bar (Mobile) */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 bg-surface dark:bg-dark-surface border-t border-line-strong dark:border-dark-line flex items-center justify-between px-2 z-40 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_rgba(0,0,0,0.05)] transition-colors">
         {items.slice(0, 2).map((it) => {
           const Icon = it.icon;
@@ -133,7 +153,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
         })}
         
         <div className="flex-1 flex flex-col items-center justify-center min-h-[56px]" data-tour="fab-mobile">
-          <button onClick={() => setIsQuickAddOpen(true)} className="w-[36px] h-[36px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform">
+          <button onClick={handleOpenCreate} className="w-[36px] h-[36px] bg-petrol-deep dark:bg-petrol text-bg flex items-center justify-center rounded-full shadow-sm active:scale-95 transition-transform">
             <Plus size={20} strokeWidth={2.5} />
           </button>
         </div>
@@ -150,13 +170,12 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
         })}
       </nav>
 
-      {/* FAB Desktop */}
-      <button onClick={() => setIsQuickAddOpen(true)} className="hidden md:flex fixed bottom-8 right-8 w-12 h-12 bg-petrol-deep dark:bg-petrol text-bg items-center justify-center shadow-xl hover:bg-petrol dark:hover:bg-petrol-deep transition z-40" data-tour="fab">
+      <button onClick={handleOpenCreate} className="hidden md:flex fixed bottom-8 right-8 w-12 h-12 bg-petrol-deep dark:bg-petrol text-bg items-center justify-center shadow-xl hover:bg-petrol dark:hover:bg-petrol-deep transition z-40" data-tour="fab">
         <Plus size={24} strokeWidth={2} />
       </button>
 
       <SearchModal />
-      <QuickAdd isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} userId={userId} />
+      <QuickAdd isOpen={isQuickAddOpen} onClose={handleCloseQuickAdd} userId={userId} demanda={demandaParaEditar} />
     </div>
   );
 }
