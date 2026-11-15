@@ -6,7 +6,7 @@ import { Check, Plus, X, ChevronUp, ChevronDown, Trash2, FileDown } from 'lucide
 import { generateObraPDF } from '@/lib/generateObraPDF';
 import { PageTour } from '@/components/ui/PageTour';
 
-export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas }: { obra: any, checklist: any[], initialParcelas: any[] }) {
+export function ObraDetailClient({ obra, checklist: initialChecklist, initialParcelas, userId }: { obra: any, checklist: any[], initialParcelas: any[], userId: string }) {
   const supabase = createClient();
   
   const [checklist, setChecklist] = useState(initialChecklist);

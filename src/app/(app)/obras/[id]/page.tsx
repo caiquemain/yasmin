@@ -7,6 +7,8 @@ export const dynamic = 'force-dynamic';
 export default async function ObraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) notFound();
 
   const { data: obra } = await supabase
     .from('obras')
@@ -21,5 +23,5 @@ export default async function ObraPage({ params }: { params: Promise<{ id: strin
     supabase.from('obra_parcelas').select('*').eq('obra_id', id).order('ordem')
   ]);
 
-  return <ObraDetailClient obra={obra} checklist={checklist ?? []} initialParcelas={parcelas ?? []} />;
+  return <ObraDetailClient obra={obra} checklist={checklist ?? []} initialParcelas={parcelas ?? []} userId={user.id} />;
 }

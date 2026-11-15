@@ -5,7 +5,7 @@ import { addDays, addWeeks, addMonths, format } from 'date-fns';
 import { X } from 'lucide-react';
 import { enqueueAction } from '@/lib/offline/syncManager';
 
-export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export function QuickAdd({ isOpen, onClose, userId }: { isOpen: boolean; onClose: () => void; userId: string }) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [categorias, setCategorias] = useState<any[]>([]);
@@ -35,26 +35,13 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
-
-    // Validação manual (o botão está fora do <form>)
-    if (!form.titulo.trim()) {
-      alert('Por favor, preencha o título.');
-      return;
-    }
+    if (!form.titulo.trim()) { alert('Por favor, preencha o título.'); return; }
 
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        alert('Sessão expirada. Faça login novamente.');
-        setLoading(false);
-        return;
-      }
-
-      // ✅ CORREÇÃO: user_id incluído no payload
       const basePayload = {
-        user_id: user.id,
+        user_id: userId,
         tipo: form.tipo,
         titulo: form.titulo,
         descricao: form.descricao || null,
@@ -74,8 +61,7 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
       if (form.recorrencia === 'none') {
         payloads.push({ ...basePayload, data: form.data, parent_id: parentId });
       } else {
-        const numOcorrencias = 4;
-        for (let i = 0; i < numOcorrencias; i++) {
+        for (let i = 0; i < 4; i++) {
           let novaData = dataBase;
           if (form.recorrencia === 'daily') novaData = addDays(dataBase, i);
           if (form.recorrencia === 'weekly') novaData = addWeeks(dataBase, i);
@@ -84,7 +70,6 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         }
       }
 
-      // OFFLINE
       if (!navigator.onLine) {
         payloads.forEach(p => enqueueAction('create_demanda', p));
         setSavedOffline(true);
@@ -93,11 +78,9 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
         return;
       }
 
-      // ONLINE
       const { error } = await supabase.from('demandas').insert(payloads);
 
       if (error) {
-        // Fallback offline se for erro de rede
         if (error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
           payloads.forEach(p => enqueueAction('create_demanda', p));
           setSavedOffline(true);
@@ -105,17 +88,14 @@ export function QuickAdd({ isOpen, onClose }: { isOpen: boolean; onClose: () => 
           setTimeout(() => onClose(), 1500);
           return;
         }
-        // Mostra o erro real (RLS, constraint, etc)
         alert('Erro ao salvar: ' + error.message);
         setLoading(false);
         return;
       }
 
-      // Sucesso
       setForm({ ...form, titulo: '', descricao: '', revisao: '', hora_inicio: '' });
       onClose();
       window.location.reload();
-
     } catch (err: any) {
       alert('Erro inesperado: ' + (err?.message || 'Tente novamente'));
       setLoading(false);

@@ -156,7 +156,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
       </button>
 
       <SearchModal />
-      <QuickAdd isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} />
+      <QuickAdd isOpen={isQuickAddOpen} onClose={() => setIsQuickAddOpen(false)} userId={userId} />
     </div>
   );
 }
