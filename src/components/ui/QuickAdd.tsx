@@ -5,7 +5,19 @@ import { addDays, addWeeks, addMonths, format } from 'date-fns';
 import { X, Trash2 } from 'lucide-react';
 import { enqueueAction } from '@/lib/offline/syncManager';
 
-export function QuickAdd({ isOpen, onClose, userId, demanda }: { isOpen: boolean; onClose: () => void; userId: string; demanda?: any }) {
+export function QuickAdd({ 
+  isOpen, 
+  onClose, 
+  userId, 
+  demanda, 
+  defaults 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  userId: string; 
+  demanda?: any; 
+  defaults?: { obra_id?: string; cliente_id?: string } 
+}) {
   const supabase = createClient();
   const isEditing = !!demanda;
   
@@ -15,20 +27,11 @@ export function QuickAdd({ isOpen, onClose, userId, demanda }: { isOpen: boolean
   const [savedOffline, setSavedOffline] = useState(false);
 
   const [form, setForm] = useState({
-    tipo: 'tarefa',
-    titulo: '',
-    descricao: '',
-    categoria_id: '',
-    obra_id: '',
-    revisao: '',
-    status: 'a_fazer',
-    prioridade: 'media',
-    data: new Date().toLocaleDateString('sv-SE'),
-    hora_inicio: '',
-    recorrencia: 'none',
+    tipo: 'tarefa', titulo: '', descricao: '', categoria_id: '', obra_id: '', revisao: '',
+    status: 'a_fazer', prioridade: 'media', data: new Date().toLocaleDateString('sv-SE'),
+    hora_inicio: '', recorrencia: 'none',
   });
 
-  // Preenche form quando entra em modo edição
   useEffect(() => {
     if (isOpen && demanda) {
       setForm({
@@ -46,12 +49,14 @@ export function QuickAdd({ isOpen, onClose, userId, demanda }: { isOpen: boolean
       });
     } else if (isOpen && !demanda) {
       setForm({
-        tipo: 'tarefa', titulo: '', descricao: '', categoria_id: '', obra_id: '', revisao: '',
-        status: 'a_fazer', prioridade: 'media', data: new Date().toLocaleDateString('sv-SE'),
+        tipo: 'tarefa', titulo: '', descricao: '', categoria_id: '',
+        obra_id: defaults?.obra_id || '',
+        revisao: '', status: 'a_fazer', prioridade: 'media',
+        data: new Date().toLocaleDateString('sv-SE'),
         hora_inicio: '', recorrencia: 'none',
       });
     }
-  }, [isOpen, demanda]);
+  }, [isOpen, demanda, defaults]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => { if (e.key === 'Escape' && isOpen) onClose(); };
@@ -110,7 +115,6 @@ export function QuickAdd({ isOpen, onClose, userId, demanda }: { isOpen: boolean
         data: form.data,
       };
 
-      // MODO EDIÇÃO
       if (isEditing) {
         if (!navigator.onLine) {
           alert('Edição requer conexão com a internet.');
@@ -118,17 +122,12 @@ export function QuickAdd({ isOpen, onClose, userId, demanda }: { isOpen: boolean
           return;
         }
         const { error } = await supabase.from('demandas').update(basePayload).eq('id', demanda.id);
-        if (error) {
-          alert('Erro ao salvar: ' + error.message);
-          setLoading(false);
-          return;
-        }
+        if (error) { alert('Erro ao salvar: ' + error.message); setLoading(false); return; }
         onClose();
         window.location.reload();
         return;
       }
 
-      // MODO CRIAÇÃO (com recorrência)
       const dataBase = new Date(form.data + 'T12:00:00');
       const parentId = crypto.randomUUID();
       const payloads: any[] = [];

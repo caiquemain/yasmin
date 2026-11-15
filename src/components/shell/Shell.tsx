@@ -24,22 +24,32 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const escAtual = search.get('esc') ?? 'todos';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
   const [demandaParaEditar, setDemandaParaEditar] = useState<any>(null);
+  const [demandaDefaults, setDemandaDefaults] = useState<any>(null);
   const router = useRouter();
   const supabase = createClient();
   useTrackRoute();
 
-  // Escuta o evento global para abrir o editor de demanda
   useEffect(() => {
     const handleOpenEditor = async (e: any) => {
       const { demandaId } = e.detail;
       const { data } = await supabase.from('demandas').select('*').eq('id', demandaId).single();
       if (data) {
         setDemandaParaEditar(data);
+        setDemandaDefaults(null);
         setIsQuickAddOpen(true);
       }
     };
+    const handleOpenNew = (e: any) => {
+      setDemandaParaEditar(null);
+      setDemandaDefaults(e.detail?.defaults || null);
+      setIsQuickAddOpen(true);
+    };
     window.addEventListener('open-demanda-editor', handleOpenEditor);
-    return () => window.removeEventListener('open-demanda-editor', handleOpenEditor);
+    window.addEventListener('open-demanda-new', handleOpenNew);
+    return () => {
+      window.removeEventListener('open-demanda-editor', handleOpenEditor);
+      window.removeEventListener('open-demanda-new', handleOpenNew);
+    };
   }, [supabase]);
 
   const active = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -53,16 +63,17 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const handleCloseQuickAdd = () => {
     setIsQuickAddOpen(false);
     setDemandaParaEditar(null);
+    setDemandaDefaults(null);
   };
 
   const handleOpenCreate = () => {
     setDemandaParaEditar(null);
+    setDemandaDefaults(null);
     setIsQuickAddOpen(true);
   };
 
   return (
     <div className="min-h-[100dvh] flex bg-bg dark:bg-dark-bg text-ink dark:text-dark-ink transition-colors duration-300">
-      
       <Tutorial userId={userId} concluido={profile?.tutorial_concluido ?? false} />
 
       <aside className="hidden md:flex w-60 bg-surface dark:bg-dark-surface border-r border-line-strong dark:border-dark-line flex-col py-6 shrink-0 transition-colors">
@@ -175,7 +186,13 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
       </button>
 
       <SearchModal />
-      <QuickAdd isOpen={isQuickAddOpen} onClose={handleCloseQuickAdd} userId={userId} demanda={demandaParaEditar} />
+      <QuickAdd 
+        isOpen={isQuickAddOpen} 
+        onClose={handleCloseQuickAdd} 
+        userId={userId} 
+        demanda={demandaParaEditar} 
+        defaults={demandaDefaults}
+      />
     </div>
   );
 }

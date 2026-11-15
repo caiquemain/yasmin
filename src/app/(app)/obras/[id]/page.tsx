@@ -18,10 +18,11 @@ export default async function ObraPage({ params }: { params: Promise<{ id: strin
 
   if (!obra) return notFound();
 
-  const [{ data: checklist }, { data: parcelas }] = await Promise.all([
+  const [{ data: checklist }, { data: parcelas }, { data: tarefas }] = await Promise.all([
     supabase.from('obra_checklist').select('*').eq('obra_id', id).order('ordem'),
-    supabase.from('obra_parcelas').select('*').eq('obra_id', id).order('ordem')
+    supabase.from('obra_parcelas').select('*').eq('obra_id', id).order('ordem'),
+    supabase.from('demandas').select('*, categorias(nome, cor)').eq('obra_id', id).neq('status', 'concluida').order('data', { ascending: true }).limit(20)
   ]);
 
-  return <ObraDetailClient obra={obra} checklist={checklist ?? []} initialParcelas={parcelas ?? []} userId={user.id} />;
+  return <ObraDetailClient obra={obra} checklist={checklist ?? []} initialParcelas={parcelas ?? []} initialTarefas={tarefas ?? []} userId={user.id} />;
 }
