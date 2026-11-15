@@ -27,6 +27,7 @@ export default function Image() {
             fontStyle: 'italic',
             fontFamily: 'serif',
             lineHeight: 1,
+            display: 'flex',
           }}
         >
           Yasmin<span style={{ color: '#C85A7E' }}>.</span>
@@ -39,6 +40,7 @@ export default function Image() {
             textTransform: 'uppercase',
             marginTop: 30,
             fontFamily: 'monospace',
+            display: 'flex',
           }}
         >
           Caderno Técnico Digital
@@ -51,6 +53,7 @@ export default function Image() {
             right: 0,
             height: 8,
             background: 'linear-gradient(90deg, #C85A7E 0%, #A83C5E 100%)',
+            display: 'flex',
           }}
         />
       </div>
