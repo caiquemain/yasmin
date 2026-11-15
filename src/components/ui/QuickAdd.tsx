@@ -145,7 +145,7 @@ export function QuickAdd({
       }
 
       if (!navigator.onLine) {
-        payloads.forEach(p => enqueueAction('create_demanda', p));
+        payloads.forEach(p => enqueueAction({ type: 'create_demanda', payload: p }));
         setSavedOffline(true);
         setLoading(false);
         setTimeout(() => onClose(), 1500);
@@ -155,7 +155,7 @@ export function QuickAdd({
       const { error } = await supabase.from('demandas').insert(payloads);
       if (error) {
         if (error.message.toLowerCase().includes('fetch') || error.message.toLowerCase().includes('network')) {
-          payloads.forEach(p => enqueueAction('create_demanda', p));
+          payloads.forEach(p => enqueueAction({ type: 'create_demanda', payload: p }));
           setSavedOffline(true);
           setLoading(false);
           setTimeout(() => onClose(), 1500);
