@@ -82,3 +82,34 @@ select option {
   background-color: #261A1D; /* dark surface */
   color: #FDF6F8; /* dark ink */
 }
+
+/* ===== SPLASH SCREEN ANIMATIONS ===== */
+@keyframes splashLogo {
+  0% { opacity: 0; transform: translateY(24px) scale(0.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes splashSubtitle {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 0.7; transform: translateY(0); }
+}
+
+@keyframes splashBar {
+  0% { width: 0%; }
+  40% { width: 30%; }
+  100% { width: 100%; }
+}
+
+.animate-splash-logo {
+  animation: splashLogo 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+.animate-splash-subtitle {
+  animation: splashSubtitle 0.7s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+.animate-splash-bar {
+  animation: splashBar 1.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}

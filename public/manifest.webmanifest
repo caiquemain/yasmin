@@ -3,9 +3,13 @@
   "short_name": "Yasmin",
   "description": "Organização pessoal e gestão de projetos estruturais",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#FDF6F8",
   "theme_color": "#C85A7E",
+  "lang": "pt-BR",
+  "categories": ["productivity", "business"],
   "icons": [
     {
       "src": "/icon",

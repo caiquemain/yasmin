@@ -4,6 +4,7 @@ import { PwaRegister } from '@/components/PwaRegister';
 import { UpdateToast } from '@/components/ui/UpdateToast';
 import { OfflineBanner } from '@/components/ui/OfflineBanner';
 import { OfflineNavGuard } from '@/components/ui/OfflineNavGuard';
+import { SplashScreen } from '@/components/ui/SplashScreen';
 import './globals.css';
 
 const sans  = IBM_Plex_Sans({  subsets:['latin'], weight:['400','500','600'], variable:'--font-plex-sans' });
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <PwaRegister />
+        <SplashScreen />
         <OfflineBanner />
         <OfflineNavGuard />
         <UpdateToast />
