@@ -1,15 +1,16 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { 
+import {
   format, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays,
-  startOfMonth, endOfMonth, startOfWeek, endOfWeek, 
+  startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   isSameMonth, isSameDay, eachDayOfInterval
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Trash2 } from 'lucide-react';
 import { PageTour } from '@/components/ui/PageTour';
 import { openDemandaEditor } from '@/hooks/useEditarDemanda';
+import { enqueueAction, hasPendingCreateFor, removeCreateFromQueue } from '@/lib/offline/syncManager';
 
 type ViewMode = 'mensal' | 'semanal' | 'diaria';
 
@@ -50,17 +51,38 @@ export function AgendaClient() {
 
   const handleDelete = async (e: React.MouseEvent, id: string, parentId: string | null) => {
     e.stopPropagation();
-    if (parentId) {
-      if (confirm('Esta tarefa faz parte de uma série. Excluir TODAS as futuras?')) {
-        await supabase.from('demandas').delete().eq('parent_id', parentId);
-        fetchDemandas();
-      } else {
-        await supabase.from('demandas').delete().eq('id', id);
-        fetchDemandas();
-      }
-    } else {
-      if (!confirm('Excluir esta tarefa?')) return;
-      await supabase.from('demandas').delete().eq('id', id);
+
+    const msg = parentId
+      ? 'Esta tarefa faz parte de uma série. Excluir TODAS as futuras?'
+      : 'Excluir esta tarefa?';
+    if (!confirm(msg)) return;
+
+    const deleteAll = parentId ? confirm('Confirmar exclusão de TODA a série?') : true;
+
+    // Se foi criada offline, remove da fila
+    if (hasPendingCreateFor(id)) {
+      removeCreateFromQueue(id);
+      setDemandas(prev => prev.filter(d => d.id !== id));
+      return;
+    }
+
+    // Otimista
+    setDemandas(prev => prev.filter(d => d.id !== id));
+
+    if (!navigator.onLine) {
+      enqueueAction({
+        type: 'delete_demanda',
+        payload: { demandaId: id, parentId: deleteAll ? parentId : null }
+      });
+      return;
+    }
+
+    const query = deleteAll && parentId
+      ? supabase.from('demandas').delete().eq('parent_id', parentId)
+      : supabase.from('demandas').delete().eq('id', id);
+    const { error } = await query;
+    if (error) {
+      // Reverte
       fetchDemandas();
     }
   };
@@ -105,8 +127,8 @@ export function AgendaClient() {
             const dayDemandas = demandas.filter(d => d.data === format(day, 'yyyy-MM-dd'));
 
             return (
-              <div 
-                key={day.toString()} 
+              <div
+                key={day.toString()}
                 onClick={() => { setCurrentDate(day); setView('diaria'); }}
                 className={`min-h-[100px] p-2 border-b border-r border-line dark:border-dark-line cursor-pointer hover:bg-bg dark:hover:bg-dark-bg transition flex flex-col gap-1
                   ${!isCurrentMonth ? 'opacity-40 bg-bg/30 dark:bg-dark-bg/30' : ''}
@@ -142,7 +164,7 @@ export function AgendaClient() {
         {days.map(day => {
           const isToday = isSameDay(day, new Date());
           const dayDemandas = demandas.filter(d => d.data === format(day, 'yyyy-MM-dd'));
-          
+
           return (
             <div key={day.toString()} className="flex-1 bg-surface dark:bg-dark-surface min-w-[140px] flex flex-col">
               <div className={`p-3 text-center border-b border-line dark:border-dark-line ${isToday ? 'bg-petrol/10' : 'bg-bg/30 dark:bg-dark-bg/30'}`}>
@@ -154,8 +176,8 @@ export function AgendaClient() {
                   <span className="text-xs text-ink-faint dark:text-dark-inkSoft text-center mt-4 italic">Vazio</span>
                 ) : (
                   dayDemandas.map(d => (
-                    <div 
-                      key={d.id} 
+                    <div
+                      key={d.id}
                       onClick={() => openDemandaEditor(d.id)}
                       className="p-2 border border-line dark:border-dark-line bg-bg/50 dark:bg-dark-bg/50 text-xs text-ink dark:text-dark-ink cursor-pointer hover:bg-petrol/10 transition"
                     >
@@ -180,7 +202,7 @@ export function AgendaClient() {
         <h2 className="font-serif text-2xl text-petrol-deep dark:text-petrol mb-6 border-b border-line dark:border-dark-line pb-2">
           {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
         </h2>
-        
+
         {dayDemandas.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-ink-faint dark:text-dark-inkSoft">
             <p className="label-mono">nada agendado.</p>
@@ -188,8 +210,8 @@ export function AgendaClient() {
         ) : (
           <div className="space-y-4">
             {dayDemandas.map(d => (
-              <div 
-                key={d.id} 
+              <div
+                key={d.id}
                 className="flex gap-4 group relative cursor-pointer hover:bg-bg dark:hover:bg-dark-bg p-2 -m-2 rounded transition"
                 onClick={() => openDemandaEditor(d.id)}
               >

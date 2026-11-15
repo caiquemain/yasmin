@@ -16,12 +16,29 @@ export function useOfflineSync() {
 
       for (const action of queue) {
         if (action.type === 'create_demanda') {
-          // O payload já tem user_id agora (vem do QuickAdd)
           const payload = { ...action.payload, user_id: user.id };
           const { error } = await supabase.from('demandas').insert([payload]);
-          
           if (error) {
-            console.error('Falha ao sincronizar item:', error);
+            console.error('Falha ao sincronizar create:', error);
+            return;
+          }
+        } else if (action.type === 'complete_demanda') {
+          const { error } = await supabase
+            .from('demandas')
+            .update({ status: 'concluida', concluida_em: new Date().toISOString() })
+            .eq('id', action.payload.demandaId);
+          if (error) {
+            console.error('Falha ao sincronizar complete:', error);
+            return;
+          }
+        } else if (action.type === 'delete_demanda') {
+          const { demandaId, parentId } = action.payload;
+          const query = parentId
+            ? supabase.from('demandas').delete().eq('parent_id', parentId)
+            : supabase.from('demandas').delete().eq('id', demandaId);
+          const { error } = await query;
+          if (error) {
+            console.error('Falha ao sincronizar delete:', error);
             return;
           }
         }
