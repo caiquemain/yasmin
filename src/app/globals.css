@@ -67,3 +67,18 @@
 .yasmin-tour-theme .driver-popover-footer {
   margin-top: 16px;
 }
+
+/* ===== CORREÇÃO DE SELECTS E OPTIONS NO DARK MODE ===== */
+select {
+  color: inherit;
+}
+
+select option {
+  background-color: #FAF7F1; /* surface claro */
+  color: #1F1B16; /* ink escuro */
+}
+
+.dark select option {
+  background-color: #261A1D; /* dark surface */
+  color: #FDF6F8; /* dark ink */
+}

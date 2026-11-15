@@ -25,11 +25,36 @@ export function QuickAdd({ isOpen, onClose, userId }: { isOpen: boolean; onClose
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (isOpen) {
-      setSavedOffline(false);
-      supabase.from('categorias').select('id, nome').order('ordem').then(({ data }) => setCategorias(data || []));
-      supabase.from('obras').select('id, nome, clientes(nome)').order('created_at', { ascending: false }).then(({ data }) => setObras(data || []));
-    }
+    if (!isOpen) return;
+    setSavedOffline(false);
+
+    const loadDependencies = async () => {
+      // Tenta carregar do cache primeiro (funciona offline)
+      const cachedCat = localStorage.getItem('yasmin_cached_categorias');
+      const cachedObra = localStorage.getItem('yasmin_cached_obras');
+      
+      if (cachedCat) setCategorias(JSON.parse(cachedCat));
+      if (cachedObra) setObras(JSON.parse(cachedObra));
+
+      // Se estiver online, busca do banco e atualiza o cache
+      if (navigator.onLine) {
+        const [catRes, obraRes] = await Promise.all([
+          supabase.from('categorias').select('id, nome').order('ordem'),
+          supabase.from('obras').select('id, nome, clientes(nome)').order('created_at', { ascending: false })
+        ]);
+
+        if (catRes.data) {
+          setCategorias(catRes.data);
+          localStorage.setItem('yasmin_cached_categorias', JSON.stringify(catRes.data));
+        }
+        if (obraRes.data) {
+          setObras(obraRes.data);
+          localStorage.setItem('yasmin_cached_obras', JSON.stringify(obraRes.data));
+        }
+      }
+    };
+
+    loadDependencies();
   }, [isOpen, supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
