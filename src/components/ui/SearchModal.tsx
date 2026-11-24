@@ -1,9 +1,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Command } from 'cmdk';
-import { Search, Briefcase, FileText, Calendar } from 'lucide-react';
+import { Search, Briefcase, Calendar, CheckCircle2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { openDemandaEditor } from '@/hooks/useEditarDemanda';
 
 export function SearchModal() {
   const [open, setOpen] = useState(false);
@@ -34,7 +35,7 @@ export function SearchModal() {
     const fetchResults = async () => {
       const [obrasRes, demandasRes] = await Promise.all([
         supabase.from('obras').select('id, nome').ilike('nome', `%${query}%`).limit(5),
-        supabase.from('demandas').select('id, titulo, data').ilike('titulo', `%${query}%`).limit(5)
+        supabase.from('demandas').select('id, titulo, data, status').ilike('titulo', `%${query}%`).order('data', { ascending: false }).limit(8)
       ]);
       
       setResultados({
@@ -53,6 +54,12 @@ export function SearchModal() {
     setOpen(false);
     setQuery('');
     router.push(path);
+  };
+
+  const closeAndOpenDemanda = (id: string) => {
+    setOpen(false);
+    setQuery('');
+    openDemandaEditor(id);
   };
 
   return (
@@ -106,17 +113,25 @@ export function SearchModal() {
             {resultados.demandas.length > 0 && (
               <Command.Group heading="Tarefas">
                 <div className="px-2 py-1 text-xs label-mono text-petrol mb-1 mt-2">TAREFAS</div>
-                {resultados.demandas.map(d => (
-                  <Command.Item 
-                    key={d.id} 
-                    onSelect={() => closeAndNavigate(`/agenda`)}
-                    className="flex items-center gap-3 px-3 py-2 text-sm rounded cursor-pointer hover:bg-petrol/10 aria-selected:bg-petrol/10 text-ink dark:text-dark-ink transition-colors"
-                  >
-                    <Calendar size={16} className="text-terra" />
-                    <span>{d.titulo}</span>
-                    <span className="ml-auto text-xs text-ink-faint font-mono">{d.data}</span>
-                  </Command.Item>
-                ))}
+                {resultados.demandas.map(d => {
+                  const isConcluida = d.status === 'concluida';
+                  return (
+                    <Command.Item 
+                      key={d.id} 
+                      onSelect={() => closeAndOpenDemanda(d.id)}
+                      className="flex items-center gap-3 px-3 py-2 text-sm rounded cursor-pointer hover:bg-petrol/10 aria-selected:bg-petrol/10 text-ink dark:text-dark-ink transition-colors"
+                    >
+                      {isConcluida ? (
+                        <CheckCircle2 size={16} className="text-olive flex-shrink-0" />
+                      ) : (
+                        <Calendar size={16} className="text-terra flex-shrink-0" />
+                      )}
+                      <span className={isConcluida ? 'line-through opacity-60 truncate' : 'truncate'}>{d.titulo}</span>
+                      {isConcluida && <span className="font-mono text-[10px] uppercase text-olive bg-olive/10 px-1.5 py-0.5 flex-shrink-0">Concluída</span>}
+                      <span className="ml-auto text-xs text-ink-faint font-mono flex-shrink-0">{d.data}</span>
+                    </Command.Item>
+                  );
+                })}
               </Command.Group>
             )}
           </Command.List>

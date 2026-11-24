@@ -19,19 +19,22 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   let qHoje = supabase.from('demandas').select('id,parent_id,tipo,titulo,status,prioridade,hora_inicio,revisao,categoria_id,obra_id,descricao,recorrencia,data,categorias(nome,cor),escritorios(nome)').eq('data', today).neq('status', 'concluida').order('hora_inicio', { nullsFirst: false });
   if (esc) qHoje = qHoje.eq('escritorio_id', esc);
 
+  let qHojeConcluidas = supabase.from('demandas').select('id,parent_id,tipo,titulo,status,prioridade,hora_inicio,revisao,categoria_id,obra_id,descricao,recorrencia,data,concluida_em,categorias(nome,cor),escritorios(nome)').eq('data', today).eq('status', 'concluida').order('concluida_em', { ascending: false });
+  if (esc) qHojeConcluidas = qHojeConcluidas.eq('escritorio_id', esc);
+
   let qBloq = supabase.from('demandas').select('id,titulo,created_at,obras(nome)').eq('status', 'aguardando_terceiros').order('created_at');
   if (esc) qBloq = qBloq.eq('escritorio_id', esc);
 
   let qObras = supabase.from('obras').select('id,nome,status_obra,art_status,clientes!inner(escritorio_id,escritorios(nome)),obra_checklist(concluido)').neq('status_obra', 'entregue').order('updated_at', { ascending: false }).limit(6);
   if (esc) qObras = qObras.eq('clientes.escritorio_id', esc);
 
-  const [{ data: hoje }, { data: bloqueadas }, { data: obras }] = await Promise.all([qHoje, qBloq, qObras]);
+  const [{ data: hoje }, { data: hojeConcluidas }, { data: bloqueadas }, { data: obras }] = await Promise.all([qHoje, qHojeConcluidas, qBloq, qObras]);
 
   return (
     <div className="max-w-[1000px] px-6 md:px-[52px] py-8 md:py-11">
       <Greeting nome={profile?.nome ?? 'Yasmin'} />
       <Resumo obras={obras?.length ?? 0} bloqueadas={bloqueadas?.length ?? 0} tarefas={hoje?.length ?? 0} />
-      <ListaHoje items={hoje ?? []} />
+      <ListaHoje items={hoje ?? []} initialConcluidas={hojeConcluidas ?? []} />
       <Bloqueadas items={bloqueadas ?? []} />
       
       {(!obras || obras.length === 0) && !esc ? (

@@ -27,6 +27,7 @@ export function ObraDetailClient({
   const [novoItemChecklist, setNovoItemChecklist] = useState('');
   const [parcelas, setParcelas] = useState(initialParcelas);
   const [tarefas, setTarefas] = useState(initialTarefas);
+  const [mostrarTarefasConcluidas, setMostrarTarefasConcluidas] = useState(false);
   const [isParcelaModalOpen, setIsParcelaModalOpen] = useState(false);
   const [formParcela, setFormParcela] = useState({ descricao: '', valor: '', data_prevista: '' });
   const [loading, setLoading] = useState(false);
@@ -116,17 +117,28 @@ export function ObraDetailClient({
 
   const handleConcluirTarefa = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setTarefas(prev => prev.filter(t => t.id !== id));
     if (hasPendingCreateFor(id)) {
       removeCreateFromQueue(id);
+      setTarefas(prev => prev.filter(t => t.id !== id));
       return;
     }
+    const agoraIso = new Date().toISOString();
+    setTarefas(prev => prev.map(t => t.id === id ? { ...t, status: 'concluida', concluida_em: agoraIso } : t));
     if (!navigator.onLine) {
       enqueueAction({ type: 'complete_demanda', payload: { demandaId: id } });
       return;
     }
-    await supabase.from('demandas').update({ status: 'concluida', concluida_em: new Date().toISOString() }).eq('id', id);
+    await supabase.from('demandas').update({ status: 'concluida', concluida_em: agoraIso }).eq('id', id);
   };
+
+  const handleReabrirTarefa = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setTarefas(prev => prev.map(t => t.id === id ? { ...t, status: 'a_fazer', concluida_em: null } : t));
+    await supabase.from('demandas').update({ status: 'a_fazer', concluida_em: null }).eq('id', id);
+  };
+
+  const tarefasPendentes = tarefas.filter(t => t.status !== 'concluida');
+  const tarefasConcluidas = tarefas.filter(t => t.status === 'concluida');
 
   const progresso = checklist.length ? Math.round((checklist.filter(c => c.concluido).length / checklist.length) * 100) : 0;
   const totalPago = parcelas.filter(p => p.status === 'pago').reduce((acc, p) => acc + Number(p.valor), 0);
@@ -173,11 +185,11 @@ export function ObraDetailClient({
               </h2>
               <button onClick={openNewTarefa} className="label-mono text-petrol hover:underline">+ Nova tarefa</button>
             </div>
-            {tarefas.length === 0 ? (
-              <p className="text-sm text-ink-soft dark:text-dark-inkSoft italic py-4">Nenhuma tarefa vinculada a esta obra.</p>
+            {tarefasPendentes.length === 0 ? (
+              <p className="text-sm text-ink-soft dark:text-dark-inkSoft italic py-4">Nenhuma tarefa pendente vinculada a esta obra.</p>
             ) : (
               <ul className="space-y-2">
-                {tarefas.map(t => (
+                {tarefasPendentes.map(t => (
                   <li
                     key={t.id}
                     onClick={() => openDemandaEditor(t.id)}
@@ -208,6 +220,46 @@ export function ObraDetailClient({
                   </li>
                 ))}
               </ul>
+            )}
+
+            {tarefasConcluidas.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-line dark:border-dark-line">
+                <button
+                  onClick={() => setMostrarTarefasConcluidas(prev => !prev)}
+                  className="flex items-center gap-2 label-mono text-ink-soft dark:text-dark-inkSoft hover:text-petrol transition"
+                >
+                  {mostrarTarefasConcluidas ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  <span>Concluídas ({tarefasConcluidas.length})</span>
+                </button>
+                {mostrarTarefasConcluidas && (
+                  <ul className="space-y-2 mt-3">
+                    {tarefasConcluidas.map(t => (
+                      <li
+                        key={t.id}
+                        onClick={() => openDemandaEditor(t.id)}
+                        className="flex items-center gap-3 p-3 border border-line dark:border-dark-line bg-surface/60 dark:bg-dark-surface/60 opacity-70 hover:opacity-100 transition cursor-pointer"
+                      >
+                        <button
+                          onClick={(e) => handleReabrirTarefa(e, t.id)}
+                          className="w-5 h-5 bg-petrol border border-petrol flex items-center justify-center flex-shrink-0 hover:bg-petrol-deep transition"
+                          title="Reabrir tarefa"
+                        >
+                          <Check size={12} className="text-bg" strokeWidth={3} />
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[14px] block text-ink dark:text-dark-ink line-through truncate">{t.titulo}</span>
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                            {t.categorias && <span className="label-mono" style={{ color: t.categorias.cor }}>{t.categorias.nome}</span>}
+                            <span className="label-mono text-ink-faint dark:text-dark-inkSoft">
+                              {new Date(t.data + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                            </span>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             )}
           </section>
 

@@ -7,7 +7,7 @@ import { SearchModal } from '../ui/SearchModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { Tutorial } from '../ui/Tutorial';
 import { useState, useEffect } from 'react';
-import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut } from 'lucide-react';
+import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut, History } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useTrackRoute } from '@/hooks/useTrackRoute';
 
@@ -114,6 +114,10 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
             <span className="flex-1">Pendências</span>
             {badges.pendencias > 0 && <span className="font-mono text-2xs bg-terra text-white px-1.5 py-0.5 tracking-wider">{badges.pendencias}</span>}
           </Link>
+          <Link href="/historico" data-tour="historico" className={`flex items-center gap-3 px-3 py-2.5 text-sm rounded-sm transition ${active('/historico') ? 'bg-petrol/10 text-petrol-deep dark:text-petrol font-medium' : 'text-ink-soft dark:text-dark-inkSoft hover:text-ink dark:hover:text-dark-ink'}`}>
+            <History size={18} strokeWidth={1.5} />
+            <span>Histórico</span>
+          </Link>
         </nav>
 
         <div className="mt-auto px-4 pt-4 border-t border-line dark:border-dark-line">
@@ -141,7 +145,10 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           ) : <div />}
           
           <div className="md:hidden flex items-center gap-3 flex-shrink-0">
-            <Link href="/financeiro" className={`p-1 transition-colors ${active('/financeiro') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
+            <Link href="/historico" title="Histórico" className={`p-1 transition-colors ${active('/historico') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
+              <History size={20} strokeWidth={1.5} />
+            </Link>
+            <Link href="/financeiro" title="Financeiro" className={`p-1 transition-colors ${active('/financeiro') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
               <Wallet size={20} strokeWidth={1.5} />
             </Link>
             <ThemeToggle />

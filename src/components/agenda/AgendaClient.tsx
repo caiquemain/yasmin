@@ -7,7 +7,7 @@ import {
   isSameMonth, isSameDay, eachDayOfInterval
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Check, Eye, EyeOff } from 'lucide-react';
 import { PageTour } from '@/components/ui/PageTour';
 import { openDemandaEditor } from '@/hooks/useEditarDemanda';
 import { enqueueAction, hasPendingCreateFor, removeCreateFromQueue } from '@/lib/offline/syncManager';
@@ -18,6 +18,7 @@ export function AgendaClient() {
   const supabase = createClient();
   const [view, setView] = useState<ViewMode>('mensal');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [mostrarConcluidas, setMostrarConcluidas] = useState(true);
   const [demandas, setDemandas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -35,19 +36,50 @@ export function AgendaClient() {
       end = currentDate;
     }
 
-    const { data } = await supabase
+    let query = supabase
       .from('demandas')
       .select('*, parent_id, categorias(nome, cor), obras(nome)')
       .gte('data', format(start, 'yyyy-MM-dd'))
       .lte('data', format(end, 'yyyy-MM-dd'))
-      .neq('status', 'concluida')
       .order('hora_inicio', { nullsFirst: true });
 
+    if (!mostrarConcluidas) {
+      query = query.neq('status', 'concluida');
+    }
+
+    const { data } = await query;
     setDemandas(data || []);
     setLoading(false);
   };
 
-  useEffect(() => { fetchDemandas(); }, [currentDate, view]);
+  useEffect(() => { fetchDemandas(); }, [currentDate, view, mostrarConcluidas]);
+
+  const handleToggleConcluida = async (e: React.MouseEvent, demanda: any) => {
+    e.stopPropagation();
+    const isConcluida = demanda.status === 'concluida';
+    const novoStatus = isConcluida ? 'a_fazer' : 'concluida';
+    const concluidaEm = isConcluida ? null : new Date().toISOString();
+
+    if (!mostrarConcluidas && !isConcluida) {
+      setDemandas(prev => prev.filter(d => d.id !== demanda.id));
+    } else {
+      setDemandas(prev => prev.map(d => d.id === demanda.id ? { ...d, status: novoStatus, concluida_em: concluidaEm } : d));
+    }
+
+    if (!navigator.onLine && !isConcluida) {
+      enqueueAction({ type: 'complete_demanda', payload: { demandaId: demanda.id } });
+      return;
+    }
+
+    const { error } = await supabase
+      .from('demandas')
+      .update({ status: novoStatus, concluida_em: concluidaEm })
+      .eq('id', demanda.id);
+
+    if (error) {
+      fetchDemandas();
+    }
+  };
 
   const handleDelete = async (e: React.MouseEvent, id: string, parentId: string | null) => {
     e.stopPropagation();
@@ -139,11 +171,18 @@ export function AgendaClient() {
                   {format(day, 'd')}
                 </span>
                 <div className="flex flex-col gap-1 mt-1 overflow-hidden">
-                  {dayDemandas.slice(0, 3).map(d => (
-                    <div key={d.id} className="text-[10px] truncate px-1 border-l-2 bg-bg/50 dark:bg-dark-bg/50 text-ink dark:text-dark-ink" style={{ borderLeftColor: d.categorias?.cor || 'var(--color-petrol)' }}>
-                      {d.titulo}
-                    </div>
-                  ))}
+                  {dayDemandas.slice(0, 3).map(d => {
+                    const isConcluida = d.status === 'concluida';
+                    return (
+                      <div
+                        key={d.id}
+                        className={`text-[10px] truncate px-1 border-l-2 bg-bg/50 dark:bg-dark-bg/50 text-ink dark:text-dark-ink ${isConcluida ? 'line-through opacity-55' : ''}`}
+                        style={{ borderLeftColor: d.categorias?.cor || 'var(--color-petrol)' }}
+                      >
+                        {isConcluida ? '✓ ' : ''}{d.titulo}
+                      </div>
+                    );
+                  })}
                   {dayDemandas.length > 3 && <span className="text-[10px] text-ink-faint dark:text-dark-inkSoft pl-1">+{dayDemandas.length - 3} mais</span>}
                 </div>
               </div>
@@ -175,16 +214,21 @@ export function AgendaClient() {
                 {dayDemandas.length === 0 ? (
                   <span className="text-xs text-ink-faint dark:text-dark-inkSoft text-center mt-4 italic">Vazio</span>
                 ) : (
-                  dayDemandas.map(d => (
-                    <div
-                      key={d.id}
-                      onClick={() => openDemandaEditor(d.id)}
-                      className="p-2 border border-line dark:border-dark-line bg-bg/50 dark:bg-dark-bg/50 text-xs text-ink dark:text-dark-ink cursor-pointer hover:bg-petrol/10 transition"
-                    >
-                      {d.hora_inicio && <span className="block font-mono text-[10px] text-petrol mb-1">{d.hora_inicio.slice(0,5)}</span>}
-                      <span className="block leading-tight">{d.titulo}</span>
-                    </div>
-                  ))
+                  dayDemandas.map(d => {
+                    const isConcluida = d.status === 'concluida';
+                    return (
+                      <div
+                        key={d.id}
+                        onClick={() => openDemandaEditor(d.id)}
+                        className={`p-2 border border-line dark:border-dark-line bg-bg/50 dark:bg-dark-bg/50 text-xs text-ink dark:text-dark-ink cursor-pointer hover:bg-petrol/10 transition ${isConcluida ? 'opacity-60' : ''}`}
+                      >
+                        {d.hora_inicio && <span className="block font-mono text-[10px] text-petrol mb-1">{d.hora_inicio.slice(0,5)}</span>}
+                        <span className={`block leading-tight ${isConcluida ? 'line-through' : ''}`}>
+                          {isConcluida ? '✓ ' : ''}{d.titulo}
+                        </span>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -209,33 +253,52 @@ export function AgendaClient() {
           </div>
         ) : (
           <div className="space-y-4">
-            {dayDemandas.map(d => (
-              <div
-                key={d.id}
-                className="flex gap-4 group relative cursor-pointer hover:bg-bg dark:hover:bg-dark-bg p-2 -m-2 rounded transition"
-                onClick={() => openDemandaEditor(d.id)}
-              >
-                <div className="w-16 flex-shrink-0 text-right pt-1">
-                  <span className="font-mono text-sm text-petrol">{d.hora_inicio ? d.hora_inicio.slice(0,5) : '—'}</span>
-                </div>
-                <div className="flex-1 border-l-2 pl-4 pb-4 relative" style={{ borderColor: d.categorias?.cor || 'var(--color-line-strong)' }}>
-                  <div className="absolute w-2 h-2 rounded-full -left-[5px] top-2" style={{ backgroundColor: d.categorias?.cor || 'var(--color-line-strong)' }} />
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="text-[15px] font-medium leading-tight text-ink dark:text-dark-ink">{d.titulo}</h3>
-                      <div className="flex gap-2 mt-1">
-                        {d.categorias && <span className="label-mono text-petrol">{d.categorias.nome}</span>}
-                        {d.obras && <span className="label-mono text-ink-soft dark:text-dark-inkSoft">• {d.obras.nome}</span>}
-                        {d.revisao && <span className="label-mono text-terra">• {d.revisao}</span>}
+            {dayDemandas.map(d => {
+              const isConcluida = d.status === 'concluida';
+              return (
+                <div
+                  key={d.id}
+                  className={`flex gap-4 group relative cursor-pointer hover:bg-bg dark:hover:bg-dark-bg p-2 -m-2 rounded transition ${isConcluida ? 'opacity-65' : ''}`}
+                  onClick={() => openDemandaEditor(d.id)}
+                >
+                  <div className="w-16 flex-shrink-0 text-right pt-1">
+                    <span className="font-mono text-sm text-petrol">{d.hora_inicio ? d.hora_inicio.slice(0,5) : '—'}</span>
+                  </div>
+                  <div className="flex-1 border-l-2 pl-4 pb-4 relative" style={{ borderColor: d.categorias?.cor || 'var(--color-line-strong)' }}>
+                    <div className="absolute w-2 h-2 rounded-full -left-[5px] top-2" style={{ backgroundColor: d.categorias?.cor || 'var(--color-line-strong)' }} />
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <button
+                          onClick={(e) => handleToggleConcluida(e, d)}
+                          title={isConcluida ? 'Reabrir tarefa' : 'Marcar como concluída'}
+                          className={`mt-0.5 w-5 h-5 border flex items-center justify-center flex-shrink-0 transition ${
+                            isConcluida
+                              ? 'bg-petrol border-petrol'
+                              : 'border-line-strong dark:border-dark-line hover:border-petrol hover:bg-petrol/10'
+                          }`}
+                        >
+                          <Check size={12} className={isConcluida ? 'text-bg' : 'text-petrol opacity-0 hover:opacity-100'} strokeWidth={3} />
+                        </button>
+                        <div className="min-w-0">
+                          <h3 className={`text-[15px] font-medium leading-tight text-ink dark:text-dark-ink ${isConcluida ? 'line-through' : ''}`}>
+                            {d.titulo}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {isConcluida && <span className="label-mono text-olive">Concluída</span>}
+                            {d.categorias && <span className="label-mono text-petrol">{d.categorias.nome}</span>}
+                            {d.obras && <span className="label-mono text-ink-soft dark:text-dark-inkSoft">• {d.obras.nome}</span>}
+                            {d.revisao && <span className="label-mono text-terra">• {d.revisao}</span>}
+                          </div>
+                        </div>
                       </div>
+                      <button onClick={(e) => handleDelete(e, d.id, d.parent_id)} className="text-ink-faint hover:text-terra md:opacity-0 group-hover:opacity-100 transition p-1 flex-shrink-0">
+                        <Trash2 size={16} />
+                      </button>
                     </div>
-                    <button onClick={(e) => handleDelete(e, d.id, d.parent_id)} className="text-ink-faint hover:text-terra md:opacity-0 group-hover:opacity-100 transition p-1">
-                      <Trash2 size={16} />
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -251,10 +314,25 @@ export function AgendaClient() {
         { element: '[data-tour="agenda-grid"]', popover: { title: "Calendário", description: "Clique em qualquer tarefa para editá-la.", side: "top", align: "center" } }
       ]} />
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-        <div data-tour="agenda-views" className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line w-fit">
-          {(['mensal', 'semanal', 'diaria'] as ViewMode[]).map(v => (
-            <button key={v} onClick={() => setView(v)} className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>{v}</button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <div data-tour="agenda-views" className="flex gap-2 p-1 bg-surface dark:bg-dark-surface border border-line-strong dark:border-dark-line w-fit">
+            {(['mensal', 'semanal', 'diaria'] as ViewMode[]).map(v => (
+              <button key={v} onClick={() => setView(v)} className={`px-4 py-1.5 text-sm capitalize transition ${view === v ? 'bg-petrol text-bg' : 'text-ink-soft dark:text-dark-inkSoft hover:bg-line/50 dark:hover:bg-dark-line/50'}`}>{v}</button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setMostrarConcluidas(prev => !prev)}
+            className={`flex items-center gap-2 px-3 py-2 border label-mono transition ${
+              mostrarConcluidas
+                ? 'border-petrol bg-petrol/10 text-petrol-deep dark:text-petrol'
+                : 'border-line-strong dark:border-dark-line bg-surface dark:bg-dark-surface text-ink-soft dark:text-dark-inkSoft'
+            }`}
+            title="Alternar exibição de tarefas concluídas"
+          >
+            {mostrarConcluidas ? <Eye size={14} /> : <EyeOff size={14} />}
+            <span>{mostrarConcluidas ? 'Concluídas visíveis' : 'Mostrar concluídas'}</span>
+          </button>
         </div>
 
         <div data-tour="agenda-nav" className="flex items-center gap-4">

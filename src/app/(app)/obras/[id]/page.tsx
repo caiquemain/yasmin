@@ -21,7 +21,7 @@ export default async function ObraPage({ params }: { params: Promise<{ id: strin
   const [{ data: checklist }, { data: parcelas }, { data: tarefas }] = await Promise.all([
     supabase.from('obra_checklist').select('*').eq('obra_id', id).order('ordem'),
     supabase.from('obra_parcelas').select('*').eq('obra_id', id).order('ordem'),
-    supabase.from('demandas').select('*, categorias(nome, cor)').eq('obra_id', id).neq('status', 'concluida').order('data', { ascending: true }).limit(20)
+    supabase.from('demandas').select('*, categorias(nome, cor)').eq('obra_id', id).order('data', { ascending: true }).limit(100)
   ]);
 
   return <ObraDetailClient obra={obra} checklist={checklist ?? []} initialParcelas={parcelas ?? []} initialTarefas={tarefas ?? []} userId={user.id} />;

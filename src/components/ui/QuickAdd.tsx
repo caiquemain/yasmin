@@ -113,6 +113,9 @@ export function QuickAdd({
         hora_inicio: form.hora_inicio || null,
         recorrencia: form.recorrencia,
         data: form.data,
+        concluida_em: form.status === 'concluida'
+          ? (demanda?.concluida_em || new Date().toISOString())
+          : null,
       };
 
       if (isEditing) {

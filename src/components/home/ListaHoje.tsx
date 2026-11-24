@@ -1,15 +1,18 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Check, Trash2, Pencil } from 'lucide-react';
+import { Check, Trash2, Pencil, ChevronDown, ChevronRight, RotateCcw } from 'lucide-react';
 import { openDemandaEditor } from '@/hooks/useEditarDemanda';
 import { enqueueAction, hasPendingCreateFor, removeCreateFromQueue } from '@/lib/offline/syncManager';
 
 const prioClass: Record<string, string> = { alta: 'text-terra', media: 'text-ink-soft dark:text-dark-inkSoft', baixa: 'text-ink-faint dark:text-dark-inkSoft' };
 
-export function ListaHoje({ items: initialItems }: { items: any[] }) {
+export function ListaHoje({ items: initialItems, initialConcluidas = [] }: { items: any[]; initialConcluidas?: any[] }) {
   const supabase = createClient();
   const [items, setItems] = useState(initialItems);
+  const [concluidas, setConcluidas] = useState(initialConcluidas);
+  const [mostrarConcluidas, setMostrarConcluidas] = useState(false);
   const [loading, setLoading] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -31,8 +34,14 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
       return;
     }
 
-    // Atualização otimista na tela
+    const itemAlvo = items.find(i => i.id === id);
+    const agoraIso = new Date().toISOString();
+
+    // Atualização otimista: move para concluídas hoje
     setItems(prev => prev.filter(i => i.id !== id));
+    if (itemAlvo) {
+      setConcluidas(prev => [{ ...itemAlvo, status: 'concluida', concluida_em: agoraIso }, ...prev]);
+    }
 
     if (!navigator.onLine) {
       enqueueAction({ type: 'complete_demanda', payload: { demandaId: id } });
@@ -43,18 +52,44 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
 
     const { error } = await supabase
       .from('demandas')
-      .update({ status: 'concluida', concluida_em: new Date().toISOString() })
+      .update({ status: 'concluida', concluida_em: agoraIso })
       .eq('id', id);
 
     if (error) {
       // Reverte em caso de erro
       setItems(initialItems);
+      setConcluidas(initialConcluidas);
       showToast('Erro ao concluir. Tente novamente.');
     }
     setLoading(null);
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string, parentId: string | null) => {
+  const handleReabrir = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setLoading(id);
+
+    const itemAlvo = concluidas.find(i => i.id === id);
+    setConcluidas(prev => prev.filter(i => i.id !== id));
+    if (itemAlvo) {
+      setItems(prev => [...prev, { ...itemAlvo, status: 'a_fazer', concluida_em: null }]);
+    }
+
+    const { error } = await supabase
+      .from('demandas')
+      .update({ status: 'a_fazer', concluida_em: null })
+      .eq('id', id);
+
+    if (error) {
+      setItems(initialItems);
+      setConcluidas(initialConcluidas);
+      showToast('Erro ao reabrir. Tente novamente.');
+    } else {
+      showToast('Tarefa reaberta.');
+    }
+    setLoading(null);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string, parentId: string | null, isConcluida = false) => {
     e.stopPropagation();
 
     const msg = parentId
@@ -75,7 +110,11 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
     }
 
     // Otimista: remove da tela
-    setItems(prev => prev.filter(i => i.id !== id));
+    if (isConcluida) {
+      setConcluidas(prev => prev.filter(i => i.id !== id));
+    } else {
+      setItems(prev => prev.filter(i => i.id !== id));
+    }
 
     if (!navigator.onLine) {
       enqueueAction({
@@ -94,6 +133,7 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
 
     if (error) {
       setItems(initialItems);
+      setConcluidas(initialConcluidas);
       showToast('Erro ao excluir. Tente novamente.');
     }
     setLoading(null);
@@ -101,9 +141,14 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
 
   return (
     <section className="mb-9 relative">
-      <h2 className="label-mono border-b border-line dark:border-dark-line pb-2 mb-3 !tracking-[0.14em]">Hoje</h2>
+      <div className="flex items-end justify-between border-b border-line dark:border-dark-line pb-2 mb-3">
+        <h2 className="label-mono !tracking-[0.14em]">Hoje</h2>
+        <Link href="/historico" className="label-mono text-petrol hover:underline">
+          Ver histórico →
+        </Link>
+      </div>
       {items.length === 0 ? (
-        <p className="text-sm text-ink-soft dark:text-dark-inkSoft py-4">nada hoje.</p>
+        <p className="text-sm text-ink-soft dark:text-dark-inkSoft py-4">nada pendente hoje.</p>
       ) : (
         <ul>
           {items.map((t) => (
@@ -148,6 +193,64 @@ export function ListaHoje({ items: initialItems }: { items: any[] }) {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Concluídas hoje (recolhível) */}
+      {concluidas.length > 0 && (
+        <div className="mt-4 pt-3 border-t border-line dark:border-dark-line">
+          <button
+            onClick={() => setMostrarConcluidas(prev => !prev)}
+            className="flex items-center gap-2 label-mono text-ink-soft dark:text-dark-inkSoft hover:text-petrol transition"
+          >
+            {mostrarConcluidas ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span>Concluídas hoje ({concluidas.length})</span>
+          </button>
+
+          {mostrarConcluidas && (
+            <ul className="mt-2">
+              {concluidas.map((t) => (
+                <li
+                  key={t.id}
+                  className="grid grid-cols-[32px_56px_1fr_auto_auto] gap-3 items-center py-2.5 border-b border-dotted border-line dark:border-dark-line last:border-0 group hover:bg-surface/50 dark:hover:bg-dark-surface/50 transition cursor-pointer opacity-70"
+                  onClick={() => openDemandaEditor(t.id)}
+                >
+                  <button
+                    onClick={(e) => handleReabrir(e, t.id)}
+                    disabled={loading === t.id}
+                    className="w-5 h-5 bg-petrol border border-petrol flex items-center justify-center hover:bg-petrol-deep transition disabled:opacity-50"
+                    title="Reabrir tarefa"
+                  >
+                    <Check size={12} className="text-bg" strokeWidth={3} />
+                  </button>
+
+                  <span className="font-mono text-[12px] text-ink-faint dark:text-dark-inkSoft">{t.hora_inicio?.slice(0, 5) ?? '—'}</span>
+                  <span className="text-[14px] text-ink dark:text-dark-ink line-through">{t.titulo}</span>
+                  <span className="label-mono truncate max-w-[160px] hidden md:block">
+                    {t.categorias?.nome ?? ''}
+                  </span>
+                  <div className="flex items-center gap-2 justify-end">
+                    <button
+                      onClick={(e) => handleReabrir(e, t.id)}
+                      disabled={loading === t.id}
+                      className="text-ink-faint hover:text-petrol opacity-0 group-hover:opacity-100 transition"
+                      title="Reabrir"
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(e, t.id, t.parent_id, true)}
+                      disabled={loading === t.id}
+                      className="text-ink-faint hover:text-terra opacity-0 group-hover:opacity-100 transition"
+                      title="Excluir"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {/* Toast flutuante de feedback */}
