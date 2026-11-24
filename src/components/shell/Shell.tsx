@@ -4,10 +4,11 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { EscritorioFilter } from './EscritorioFilter';
 import { QuickAdd } from '../ui/QuickAdd';
 import { SearchModal } from '../ui/SearchModal';
+import { FeedbackModal } from '../ui/FeedbackModal';
 import { ThemeToggle } from '../ui/ThemeToggle';
 import { Tutorial } from '../ui/Tutorial';
 import { useState, useEffect } from 'react';
-import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut, History } from 'lucide-react';
+import { Home, CalendarDays, Building2, Settings, AlertCircle, Plus, Wallet, Search, LogOut, History, MessageSquarePlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useTrackRoute } from '@/hooks/useTrackRoute';
 
@@ -23,6 +24,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
   const search = useSearchParams();
   const escAtual = search.get('esc') ?? 'todos';
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [demandaParaEditar, setDemandaParaEditar] = useState<any>(null);
   const [demandaDefaults, setDemandaDefaults] = useState<any>(null);
   const router = useRouter();
@@ -120,8 +122,16 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           </Link>
         </nav>
 
-        <div className="mt-auto px-4 pt-4 border-t border-line dark:border-dark-line">
-          <div className="flex items-center justify-between" data-tour="avatar">
+        <div className="mt-auto px-3 pt-4 space-y-3 border-t border-line dark:border-dark-line">
+          <button
+            onClick={() => setIsFeedbackOpen(true)}
+            className="w-full flex items-center gap-3 px-3 py-2 text-xs font-mono uppercase tracking-wider text-ink-soft dark:text-dark-inkSoft hover:text-petrol-deep dark:hover:text-petrol hover:bg-petrol/10 rounded-sm transition"
+          >
+            <MessageSquarePlus size={16} strokeWidth={1.5} />
+            <span>Reportar problema</span>
+          </button>
+
+          <div className="flex items-center justify-between px-1" data-tour="avatar">
             <div className="flex items-center gap-3 label-mono min-w-0">
               <div className="w-8 h-8 flex-shrink-0 flex items-center justify-center bg-petrol text-bg font-serif text-sm tracking-normal overflow-hidden rounded-full">
                 {profile?.avatar_url ? <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" /> : profile?.nome?.[0]?.toUpperCase() ?? 'Y'}
@@ -145,6 +155,9 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
           ) : <div />}
           
           <div className="md:hidden flex items-center gap-3 flex-shrink-0">
+            <button onClick={() => setIsFeedbackOpen(true)} title="Reportar problema ou ideia" className="p-1 text-ink-soft dark:text-dark-inkSoft hover:text-petrol transition-colors">
+              <MessageSquarePlus size={20} strokeWidth={1.5} />
+            </button>
             <Link href="/historico" title="Histórico" className={`p-1 transition-colors ${active('/historico') ? 'text-petrol' : 'text-ink-soft dark:text-dark-inkSoft'}`}>
               <History size={20} strokeWidth={1.5} />
             </Link>
@@ -193,6 +206,7 @@ export function Shell({ profile, escritorios, children, badges = {}, userId }: a
       </button>
 
       <SearchModal />
+      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
       <QuickAdd 
         isOpen={isQuickAddOpen} 
         onClose={handleCloseQuickAdd} 
